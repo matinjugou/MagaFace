@@ -1,0 +1,8 @@
+train: /data/WIDER_FACE/face/images/train
+val: /data/WIDER_FACE/face/images/val
+
+# number of classes
+nc: 1
+
+# class names
+names: ['person']
