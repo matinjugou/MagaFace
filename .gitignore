@@ -53,7 +53,6 @@ gcp_test*.sh
 
 # Neural Network weights -----------------------------------------------------------------------------------------------
 *.weights
-*.pt
 *.onnx
 *.mlmodel
 *.torchscript
