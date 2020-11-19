@@ -3,6 +3,8 @@ import cv2
 import os
 import sys
 
+import torch
+
 extraction_sdk = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../extraction'))
 if extraction_sdk not in sys.path:
     sys.path.append(extraction_sdk)
@@ -37,9 +39,8 @@ class FaceDetection:
         return f'#FaceDetection# bbox=[({self.bbox.left},{self.bbox.top})->({self.bbox.right},{self.bbox.bottom})], confidence={self.confidence}'
 
 
-class FaceDetector():
-
-    def __init__(self, model_path = None, device='cpu'):
+class FaceDetector:
+    def __init__(self, model_path=None, device="0" if torch.cuda.is_available() else "cpu"):
         if model_path is None:
             model_path = os.path.join(extraction_sdk, 'face_extraction.pt')
         self.extractor = Extractor(model_path, device)
