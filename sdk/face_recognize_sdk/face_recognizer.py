@@ -12,7 +12,7 @@ from recognition import RecognitionModel
 
 
 class FaceRecognizer:
-    def __init__(self, model_path=None, threshold=0.8,
+    def __init__(self, model_path=None, threshold=0.2,
                  device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")):
         if model_path is None:
             model_path = os.path.join(recognition_sdk, 'Backbone_IR_50_Epoch_125_Batch_3125_Time_2020-11-19-13-22_checkpoint.pth')
@@ -28,8 +28,8 @@ class FaceRecognizer:
     def verify(self, gallery_img, query_img, dist_threshold=None) -> bool:
         f1 = self.generate_feature(gallery_img)
         f2 = self.generate_feature(query_img)
+        return self.verify_feature(f1, f2, dist_threshold)[1]
+
+    def verify_feature(self, f1, f2, dist_threshold=None) -> (float, bool):
         dist = self.calculate_feature_dist(f1, f2)
-        if dist < (dist_threshold or self.threshold):
-            return True
-        else:
-            return False
+        return dist, dist < (dist_threshold or self.threshold)
