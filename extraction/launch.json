@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Train",
+            "type": "python",
+            "request": "launch",
+            "env": {"CUDA_VISIBLE_DEVICES": "4"},
+            "args": ["--img", "640", "--batch", "32", "--epochs", "100", "--data", "wider.yaml", "--cfg", "yolov5s.yaml", "--cache", "--single-cls"],
+            "program": "train.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Test",
+            "type": "python",
+            "request": "launch",
+            "env": {"CUDA_VISIBLE_DEVICES": "1"},
+            "args": ["--weights", "path/to/best.pt", "--data", "fddb.yaml", "--img", "672", "--conf-thres", "0.4"],
+            "program": "test.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Extractor",
+            "type": "python",
+            "request": "launch",
+            "env": {"CUDA_VISIBLE_DEVICES": "4"},
+            "program": "extractor.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}

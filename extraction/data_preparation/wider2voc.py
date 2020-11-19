@@ -2,16 +2,6 @@ import os
 import sys
 from PIL import Image
 
-'''
-img = r"D:\aatest\测试图像.jpg"
-img_m = Image.open(img)
-
-Size = img_m.size  # 返回图片 宽高 的一个元组，单位是像素
-w = img_m.width  # 图片的宽
-h = img_m.height  # 图片的高
-f = img_m.format  # 图像格式
-'''
-
 input_file = sys.argv[1]
 image_dir = sys.argv[2]
 output_dir = sys.argv[3]

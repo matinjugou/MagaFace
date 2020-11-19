@@ -3,6 +3,7 @@ runs
 utils/__pycache__
 __pycache__
 models/__pycache__
+.vscode
 
 # Repo-specific GitIgnore ----------------------------------------------------------------------------------------------
 *.jpg
@@ -24,7 +25,6 @@ models/__pycache__
 *.MOV
 *.avi
 *.data
-*.json
 
 *.cfg
 !cfg/yolov3*.cfg

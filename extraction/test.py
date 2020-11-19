@@ -17,6 +17,11 @@ from utils.general import (
     xyxy2xywh, clip_coords, plot_images, xywh2xyxy, box_iou, output_to_target, ap_per_class, set_logging)
 from utils.torch_utils import select_device, time_synchronized
 
+outputfile = open('wrong_cases.txt', 'w')
+outputfile.write('cp ')
+
+outputfile_loss = open('loss_cases.txt', 'w')
+outputfile_loss.write('cp ')
 
 def test(data,
          weights=None,
@@ -206,6 +211,10 @@ def test(data,
                                     break
 
             # Append statistics (correct, conf, pcls, tcls)
+            if not correct[:-1, 0].all().item():
+                outputfile.write(paths[si] + ' ')
+            if correct.shape[0] < labels.shape[0]:
+                outputfile_loss.write(paths[si] + ' ')
             stats.append((correct.cpu(), pred[:, 4].cpu(), pred[:, 5].cpu(), tcls))
 
         # Plot images
@@ -327,3 +336,8 @@ if __name__ == '__main__':
             np.savetxt(f, y, fmt='%10.4g')  # save
         os.system('zip -r study.zip study_*.txt')
         # utils.general.plot_study_txt(f, x)  # plot
+        
+    outputfile.write('.')
+    outputfile.close()
+    outputfile_loss.write('.')
+    outputfile_loss.close()
