@@ -21,11 +21,11 @@ configurations = {
     1: dict(
         SEED = 1337, # random seed for reproduce results
 
-        DATA_ROOT = '/workspace/zhongjincheng/face_data/lfw', # the parent root where your train/val/test data are stored
+        DATA_ROOT = '/workspace/zhongjincheng/data/test-mask-slim', # the parent root where your train/val/test data are stored
         MODEL_ROOT = '/workspace/zhongjincheng/MagaFace/recognition/checkpoints', # the root to buffer your checkpoints
         LOG_ROOT = '/workspace/zhongjincheng/MagaFace/recognition/logs', # the root to log your train/val status
-        BACKBONE_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
-        HEAD_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
+        BACKBONE_RESUME_ROOT = '/workspace/zhongjincheng/MagaFace/recognition/checkpoints/Backbone_IR_50_Epoch_125_Batch_3125_Time_2020-11-19-13-22_checkpoint.pth', # the root to resume training from a saved checkpoint
+        HEAD_RESUME_ROOT = './',#'/workspace/zhongjincheng/MagaFace/recognition/checkpoints/Head_ArcFace_Epoch_125_Batch_3125_Time_2020-11-19-13-23_checkpoint.pth', # the root to resume training from a saved checkpoint
 
         BACKBONE_NAME = 'IR_50', # support: ['ResNet_50', 'ResNet_101', 'ResNet_152', 'IR_50', 'IR_101', 'IR_152', 'IR_SE_50', 'IR_SE_101', 'IR_SE_152']
         HEAD_NAME = 'ArcFace', # support:  ['Softmax', 'ArcFace', 'CosFace', 'SphereFace', 'Am_softmax']
@@ -37,7 +37,7 @@ configurations = {
         EMBEDDING_SIZE = 512, # feature dimension
         BATCH_SIZE = 512,
         DROP_LAST = True, # whether drop the last batch to ensure consistent batch_norm statistics
-        LR = 0.1, # initial LR
+        LR = 0.01, # initial LR
         NUM_EPOCH = 125, # total epoch number (use the firt 1/25 epochs to warm up)
         WEIGHT_DECAY = 5e-4, # do not apply to batch_norm parameters
         MOMENTUM = 0.9,
@@ -45,7 +45,7 @@ configurations = {
 
         DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
         MULTI_GPU = True, # flag to use multiple GPUs; if you choose to train with single GPU, you should first run "export CUDA_VISILE_DEVICES=device_id" to specify the GPU card you want to use
-        GPU_ID = [0, 1, 2, 3], # specify your GPU ids
+        GPU_ID = [0, 1, 2, 3,4,5,6,7], # specify your GPU ids
         PIN_MEMORY = True,
         NUM_WORKERS = 0,
 ),
@@ -176,11 +176,14 @@ if __name__ == '__main__':
     # optionally resume from a checkpoint
     if BACKBONE_RESUME_ROOT and HEAD_RESUME_ROOT:
         print("=" * 60)
-        if os.path.isfile(BACKBONE_RESUME_ROOT) and os.path.isfile(HEAD_RESUME_ROOT):
+        if os.path.isfile(BACKBONE_RESUME_ROOT):
             print("Loading Backbone Checkpoint '{}'".format(BACKBONE_RESUME_ROOT))
             BACKBONE.load_state_dict(torch.load(BACKBONE_RESUME_ROOT))
-            print("Loading Head Checkpoint '{}'".format(HEAD_RESUME_ROOT))
-            HEAD.load_state_dict(torch.load(HEAD_RESUME_ROOT))
+            if os.path.isfile(HEAD_RESUME_ROOT):
+                print("Loading Head Checkpoint '{}'".format(HEAD_RESUME_ROOT))
+                HEAD.load_state_dict(torch.load(HEAD_RESUME_ROOT))
+            else:
+                print('Fine-tuning')
         else:
             print("No Checkpoint Found at '{}' and '{}'. Please Have a Check or Continue to Train from Scratch".format(
                 BACKBONE_RESUME_ROOT, HEAD_RESUME_ROOT))
@@ -271,8 +274,8 @@ if __name__ == '__main__':
         # validation statistics per epoch (buffer for visualization)
         print("=" * 60)
         # print("Perform Evaluation on LFW, CFP_FF, CFP_FP, AgeDB, CALFW, CPLFW and VGG2_FP, and Save Checkpoints...")
-        accuracy_lfw, best_threshold_lfw, roc_curve_lfw = perform_val(MULTI_GPU, DEVICE, EMBEDDING_SIZE, BATCH_SIZE,
-                                                                      BACKBONE, lfw, lfw_issame)
+        # accuracy_lfw, best_threshold_lfw, roc_curve_lfw = perform_val(MULTI_GPU, DEVICE, EMBEDDING_SIZE, BATCH_SIZE,
+        #                                                               BACKBONE, lfw, lfw_issame)
         # buffer_val(writer, "LFW", accuracy_lfw, best_threshold_lfw, roc_curve_lfw, epoch + 1)
         # accuracy_cfp_ff, best_threshold_cfp_ff, roc_curve_cfp_ff = perform_val(MULTI_GPU, DEVICE, EMBEDDING_SIZE,
         #                                                                        BATCH_SIZE, BACKBONE, cfp_ff,

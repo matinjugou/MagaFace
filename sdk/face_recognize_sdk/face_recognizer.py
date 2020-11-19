@@ -40,3 +40,18 @@ class FaceRecognizer:
             return True
         else:
             return False
+
+    def generate_feature_from_raw_img(self, img):
+        # TODO: add feature extraction logic for single image
+        return self.recognizer.predict(img)
+
+    def verify_from_raw_img(self, gallery_img, query_img, dist_threshold=None) -> bool:
+        f1 = self.generate_feature_from_raw_img(gallery_img)
+        f2 = self.generate_feature_from_raw_img(query_img)
+        dist = self.calculate_feature_dist(f1, f2)
+        print(dist)
+
+        if dist > (dist_threshold or self.threshold):
+            return True
+        else:
+            return False

@@ -47,6 +47,7 @@ class RecognitionModel():
 
 
     def distance(self, f1, f2):
-        diff = np.subtract(f1, f2)
-        dist = np.sum(np.square(diff), 1)
-        return dist
+        f1=torch.Tensor(f1)
+        f2=torch.Tensor(f2)
+        cos = torch.nn.functional.cosine_similarity(f1,f2).detach()
+        return cos.numpy()
