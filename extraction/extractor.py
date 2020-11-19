@@ -51,5 +51,5 @@ class Extractor():
 
 
 if __name__ == "__main__":
-    extractor = Extractor(model_path='runs/exp0/weights/best.pt')
-    print(extractor.predict_from_file('inference/images/zidane.jpg'))
+    extractor = Extractor(model_path='path/to/best.pt')
+    print(extractor.predict_from_file('path/to/image.jpg'))

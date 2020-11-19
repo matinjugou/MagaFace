@@ -1,6 +1,9 @@
 ### Face Extraction SDK
 Face extraction SDK based on YOLOv5.
 
+### 训练、测试、预测
+适用于vscode的`launch.json`文件已经放在了目录下，请自行配置执行环境，需要Pytorch1.6及以上执行环境
+
 #### 使用方式
 直接预测图片的结果
 ```python

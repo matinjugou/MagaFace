@@ -1,8 +1,6 @@
-
-
 import cv2
 
-from face_detect_sdk.face_detector import FaceDetector, FaceDetection
+from face_detect_sdk.face_detector import FaceDetector
 
 
 if __name__ == "__main__":

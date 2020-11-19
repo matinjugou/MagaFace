@@ -299,6 +299,15 @@ def ap_per_class(tp, conf, pred_cls, target_cls, plot=False, fname='precision-re
                 if j == 0:
                     py.append(np.interp(px, mrec, mpre))  # precision at mAP@0.5
 
+            print()
+            count_res = [100, 1000]
+            for res in count_res:
+                indexes = (fpc <= res).sum(0) - 1
+                print("TPR@%d: " % res, end="")
+                for i in range(recall.shape[1]):
+                    print("%f " % recall[indexes[i]][i], end="")
+                print()
+
     # Compute F1 score (harmonic mean of precision and recall)
     f1 = 2 * p * r / (p + r + 1e-16)
 

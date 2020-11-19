@@ -4,6 +4,7 @@ import os
 import sys
 
 import torch
+import numpy as np
 
 extraction_sdk = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../extraction'))
 if extraction_sdk not in sys.path:
@@ -45,7 +46,7 @@ class FaceDetector:
             model_path = os.path.join(extraction_sdk, 'face_extraction.pt')
         self.extractor = Extractor(model_path, device)
 
-    def detect_image(self, img) -> List[FaceDetection]:
+    def detect_image(self, img: np.ndarray) -> List[FaceDetection]:
         return [
             FaceDetection(int(result[0]), int(result[1]),
                           int(result[2]), int(result[3]),
@@ -53,10 +54,10 @@ class FaceDetector:
             for result in self.extractor.predict(img)
         ]
 
-    def detect_images(self, imgs) -> List[List[FaceDetection]]:
+    def detect_images(self, imgs: List[np.ndarray]) -> List[List[FaceDetection]]:
         return [self.detect_image(img) for img in imgs]
 
-    def visualize(self, image, detection_list: List[FaceDetection], color=(0,0,255), thickness=5):
+    def visualize(self, image: np.ndarray, detection_list: List[FaceDetection], color=(0,0,255), thickness=5) -> None:
         img = image.copy()
         for detection in detection_list:
             bbox = detection.bbox
