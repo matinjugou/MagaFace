@@ -271,8 +271,8 @@ if __name__ == '__main__':
         # validation statistics per epoch (buffer for visualization)
         print("=" * 60)
         # print("Perform Evaluation on LFW, CFP_FF, CFP_FP, AgeDB, CALFW, CPLFW and VGG2_FP, and Save Checkpoints...")
-        # accuracy_lfw, best_threshold_lfw, roc_curve_lfw = perform_val(MULTI_GPU, DEVICE, EMBEDDING_SIZE, BATCH_SIZE,
-        #                                                               BACKBONE, lfw, lfw_issame)
+        accuracy_lfw, best_threshold_lfw, roc_curve_lfw = perform_val(MULTI_GPU, DEVICE, EMBEDDING_SIZE, BATCH_SIZE,
+                                                                      BACKBONE, lfw, lfw_issame)
         # buffer_val(writer, "LFW", accuracy_lfw, best_threshold_lfw, roc_curve_lfw, epoch + 1)
         # accuracy_cfp_ff, best_threshold_cfp_ff, roc_curve_cfp_ff = perform_val(MULTI_GPU, DEVICE, EMBEDDING_SIZE,
         #                                                                        BATCH_SIZE, BACKBONE, cfp_ff,

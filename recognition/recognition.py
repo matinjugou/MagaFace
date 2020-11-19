@@ -1,4 +1,5 @@
-from backbone import IR_50
+from backbone.model_irse import IR_50
+from util.utils import l2_norm
 
 import torch
 import torchvision.transforms as transforms
@@ -9,7 +10,7 @@ import os
 
 
 class RecognitionModel():
-    def __init__(self, model_path='backbone_ir50_ms1m_epoch63.pth',
+    def __init__(self, model_path='Backbone_IR_50_Epoch_125_Batch_3125_Time_2020-11-19-13-22_checkpoint.pth',
                  device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")):
         input_size = [112, 112]
         rgb_mean = [0.5, 0.5, 0.5]
@@ -42,4 +43,10 @@ class RecognitionModel():
         x = self.transform(img).expand(1, 3, 112, 112)
         x = x.to(self.device)
         res = self.backbone(x)
-        return res.cpu().detach().numpy()
+        return l2_norm(res.cpu().detach()).numpy()
+
+
+    def distance(self, f1, f2):
+        diff = np.subtract(f1, f2)
+        dist = np.sum(np.square(diff), 1)
+        return dist

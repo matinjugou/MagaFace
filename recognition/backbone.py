@@ -6,7 +6,7 @@ from collections import namedtuple
 
 
 # Support: ['IR_50', 'IR_101', 'IR_152', 'IR_SE_50', 'IR_SE_101', 'IR_SE_152']
-
+#
 
 class Flatten(Module):
     def forward(self, input):

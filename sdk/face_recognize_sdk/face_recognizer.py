@@ -20,11 +20,13 @@ class FaceRecognizer:
 
     def generate_feature(self, img):
         # TODO: add feature extraction logic for single image
+
         return self.recognizer.predict_raw(Image.fromarray(img))
 
     def calculate_feature_dist(self, f1, f2) -> float:
         # TODO: add distance calculation logic
-        return 1.0
+        return self.recognizer.distance(f1,f2)
+
 
     def verify(self, gallery_img, query_img, dist_threshold=None) -> bool:
         # TODO: add verification logic
