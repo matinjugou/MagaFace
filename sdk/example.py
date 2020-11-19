@@ -6,7 +6,6 @@ if __name__ == "__main__":
     image_path = 'data/test.jpg'
     img = cv2.imread(image_path)
 
-    # TODO: modify this
     face_matcher = FaceMatcher()
 
     # execute detect

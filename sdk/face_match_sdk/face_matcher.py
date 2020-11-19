@@ -1,3 +1,5 @@
+from typing import List
+
 import cv2
 import numpy as np
 
@@ -20,13 +22,12 @@ class FeaturedFaceDetection:
         self.feature = feature
 
 
-
 class FaceMatcher:
     def __init__(self, detector_model_path=None, recognizer_model_path=None):
         self.detector = FaceDetector(detector_model_path)
         self.recognizer = FaceRecognizer(recognizer_model_path)
 
-    def extract_faces(self, img):
+    def extract_faces(self, img: np.ndarray) -> List[FeaturedFaceDetection]:
         """
         Detect, crop, and calculate the feature of all faces in the img
         :param img: image in numpy array
@@ -40,14 +41,14 @@ class FaceMatcher:
             results.append(FeaturedFaceDetection(face, image, feature))
         return results
 
-    def extract_whole_face(self, img: np.ndarray):
+    def extract_whole_face(self, img: np.ndarray) -> FeaturedFaceDetection:
         feature = self.recognizer.generate_feature(img)
         return FeaturedFaceDetection(FaceDetection(0, 0, img.shape[2], img.shape[1], 0, 1.0), img, feature)
 
-    def compare_faces(self, face1: FeaturedFaceDetection, face2: FeaturedFaceDetection):
-        return self.recognizer.verify_feature(face1.feature, face2.feature)
+    def compare_faces(self, face1: FeaturedFaceDetection, face2: FeaturedFaceDetection, threshold=None) -> (float, bool):
+        return self.recognizer.verify_feature(face1.feature, face2.feature, dist_threshold=threshold)
 
-    def visualize(self, image, detection_list, color=(0,0,255), thickness=2):
+    def visualize(self, image: np.ndarray, detection_list: List[FeaturedFaceDetection], color=(0,0,255), thickness=2) -> None:
         img = image.copy()
         for i, detection in enumerate(detection_list):
             bbox = detection.bbox
