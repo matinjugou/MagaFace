@@ -10,7 +10,7 @@ if __name__ == "__main__":
     image_path_2 = '../data/2.png'
     img_2 = cv2.imread(image_path_2)
     image_path_3 = '../data/3.png'
-    img_3 = cv2.imread(image_path_2)
+    img_3 = cv2.imread(image_path_3)
 
     # TODO: modify this
     face_recognizer = FaceRecognizer()
