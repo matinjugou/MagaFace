@@ -13,7 +13,7 @@ from recognition import RecognitionModel
 
 
 class FaceRecognizer:
-    def __init__(self, model_path=None, threshold=0.2,
+    def __init__(self, model_path=None, threshold=0.9,
                  device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")):
         if model_path is None:
             model_path = os.path.join(recognition_sdk, 'Backbone_IR_50_Epoch_125_Batch_3125_Time_2020-11-19-13-22_checkpoint.pth')
@@ -31,25 +31,15 @@ class FaceRecognizer:
         f2 = self.generate_feature(query_img)
         return self.verify_feature(f1, f2, dist_threshold)[1]
 
-        if dist > (dist_threshold or self.threshold):
-            return True
-        else:
-            return False
-
     def generate_feature_from_raw_img(self, img):
-        # TODO: add feature extraction logic for single image
         return self.recognizer.predict(img)
 
     def verify_from_raw_img(self, gallery_img, query_img, dist_threshold=None) -> bool:
         f1 = self.generate_feature_from_raw_img(gallery_img)
         f2 = self.generate_feature_from_raw_img(query_img)
         dist = self.calculate_feature_dist(f1, f2)
-        print(dist)
+        return self.verify_feature(f1, f2, dist_threshold)[1]
 
-        if dist > (dist_threshold or self.threshold):
-            return True
-        else:
-            return False
     def verify_feature(self, f1: np.ndarray, f2: np.ndarray, dist_threshold=None) -> (float, bool):
         dist = self.calculate_feature_dist(f1, f2)
         return dist, dist > (dist_threshold or self.threshold)
