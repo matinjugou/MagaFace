@@ -1,8 +1,12 @@
+import time
+from collections import OrderedDict
+
 import math
 import os
 import sys
 from threading import Condition, Lock
 
+import numpy as np
 from cv2 import cv2
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, Qt
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen
@@ -14,19 +18,25 @@ os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;udp"
 
 reid_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Reid'))
 dcn_v2_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Reid/DCNv2_latest'))
-extraction_sdk = os.path.abspath(os.path.join(os.path.dirname(__file__), '../extraction'))
+detect_sdk = os.path.abspath(os.path.join(os.path.dirname(__file__), '../extraction'))
+recognize_sdk = os.path.abspath(os.path.join(os.path.dirname(__file__), '../recognition'))
 attribute_sdk = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Attribute'))
-for path in [reid_path, dcn_v2_path, extraction_sdk, attribute_sdk]:
+for path in [reid_path, dcn_v2_path, detect_sdk, recognize_sdk, attribute_sdk]:
     if path not in sys.path:
         sys.path.insert(0, path)
 
 from ReIDSDK import ReID
 from extractor import Extractor
+from recognition import RecognitionModel
 from PedestrianAttributeSDK import PedestrianAttributeSDK
 
 REID_MODEL_PATH = os.path.join(reid_path, 'fairmot_dla34.pth')
-EXTRACTOR_MODEL_PATH = os.path.join(extraction_sdk, 'face_extraction.pt')
+DETECT_MODEL_PATH = os.path.join(detect_sdk, 'face_extraction.pt')
+RECOGNIZE_MODEL_PATH = os.path.join(recognize_sdk, 'Backbone_IR_50_Epoch_125_Batch_3125_Time_2020-11-19-13-22_checkpoint.pth')
 ATTRIBUTE_MODEL_PATH = os.path.join(attribute_sdk, 'peta_ckpt_max.pth')
+
+INSTANCE_FEATURE_LENGTH = 128
+FACE_FEATURE_LENGTH = 256
 
 
 class VideoInfoRow:
@@ -41,28 +51,69 @@ class VideoInfoRow:
 
 
 class VideoPlayer(QObject):
+    # image, image info, [{ frame: index, instance: uuid, instance_feature: ndarray, instance_color: rgb,
+    #                       instance_name: option[str], instance_bbox: bbox, face: option[uuid],
+    #                       face_feature: option[ndarray], face_color: rgb, face_bbox: bbox, face_name: option[str],
+    #                       attributes: dict, blacklist: uuid, blacklist_name: option[str] }]
     frameReady = pyqtSignal(QImage, dict, list)
+    instancesReset = pyqtSignal(list)
     finished = pyqtSignal()
 
-    def __init__(self, capture, pkl, reid_model, face_model, attribute_model):
+    def __init__(self, capture, instance_file, reid_model, detect_model, recoginize_model, attribute_model):
         super(QObject, self).__init__()
         self.capture = capture
-        self.pkl = pkl
+        self.instance_file = instance_file
+        self.blacklist_file = None
         self.reid_model = reid_model
         self.capture_mutex = Lock()
         self.running = True  # Python assignment is atomic
         self.playing = False
         self.playing_cv = Condition()
-        # Savable data
-        # frameIndex -> [{ bbox, re_id, nullable face_bbox, nullable  face_id }]
-        self.raw_data = {}
+        # State
+        self.detector_enabled = False
+        # Results
+        # index -> [{ frame: index, instance: uuid, instance_feature: ndarray, instance_bbox: bbox,
+        #             face: option[uuid], face_feature: option[ndarray], face_bbox: bbox, attributes: dict }]
+        self.results_mutex = Lock()
+        self.frames = {}
+        # uuid -> { color: rgb, name: option[str] }
+        self.instance = OrderedDict()
+        self.instance_features = np.empty((0, INSTANCE_FEATURE_LENGTH))
+        # uuid -> { color: rgb, name: option[str] }
+        self.faces = OrderedDict()
+        self.face_features = np.empty((0, FACE_FEATURE_LENGTH))
+        # Blacklists
+        # uuid -> { name: option[str] }
+        self.blacklist = OrderedDict()
+        self.blacklist_features = np.empty((0, FACE_FEATURE_LENGTH))
 
-    def thread(self): # A slot takes no params
+    def load_instance_file(self):
+        pass
+
+    def save_instance_file(self):
+        pass
+
+    def load_blacklist_file(self, blacklist_filename):
+        pass
+
+    def save_blacklist_file(self):
+        pass
+
+    def set_detector_enabled(self, value):
+        self.detector_enabled = value
+
+    def thread(self):
+        last_time = None
         with self.playing_cv:
             while self.running:
                 self.playing_cv.wait_for(lambda: self.playing)
                 if not self.running:
                     break
+                rate = 1 / self.capture.get(cv2.CAP_PROP_FPS)
+                new_time = time.time()
+                if last_time is not None and new_time < last_time + rate:
+                    time.sleep(last_time + rate - new_time)  # it is hard to sleep with a condition variable
+                last_time = new_time
                 with self.capture_mutex:
                     remaining, frame = self.capture.read()
                     data = {
@@ -77,8 +128,10 @@ class VideoPlayer(QObject):
                 h, w, ch = rgb_image.shape
                 bytes_per_line = ch * w
                 image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
-                reids = self.reid_model.predict(frame)
-                self.frameReady.emit(image, data, reids)
+                instances = []
+                if self.detector_enabled:
+                    self.reid_model.predict(frame)
+                self.frameReady.emit(image, data, instances)
         self.running = False
 
     def stop(self):
@@ -120,7 +173,7 @@ class MainWindow(QMainWindow):
 
         # Data
         self.url = None
-        self.pkl = None
+        self.instance_file = None
         self.player_thread = None
         self.player = None
         self.playing = False
@@ -129,7 +182,8 @@ class MainWindow(QMainWindow):
 
         # Models
         self.reid_model = ReID(REID_MODEL_PATH, model_name='dla_34')
-        self.face_model = Extractor(EXTRACTOR_MODEL_PATH, 'cpu')
+        self.face_detect_model = Extractor(DETECT_MODEL_PATH, 'cpu')
+        self.face_recognize_model = RecognitionModel(RECOGNIZE_MODEL_PATH)
         self.attribute_model = PedestrianAttributeSDK(ATTRIBUTE_MODEL_PATH, 'cpu')
 
         # Signals and slots
@@ -141,6 +195,7 @@ class MainWindow(QMainWindow):
         self.ui.playSlider.sliderPressed.connect(self.slider_pressed)
         self.ui.playSlider.sliderMoved.connect(self.jump_to_frame)
         self.ui.playSlider.sliderReleased.connect(self.slider_released)
+        self.ui.detector.changed.connect(self.set_detector_enabled)
 
     def slider_pressed(self):
         self.slider_dragging = True
@@ -162,15 +217,19 @@ class MainWindow(QMainWindow):
                                                   '.', 'Video Files (*.mp4 *.flv *.ts *.mts *.avi)')
         if filename != '':
             self.url = filename
-            self.pkl = os.path.splitext(filename)[0] + '.npy'
+            self.instance_file = os.path.splitext(filename)[0] + '.npy'
             self.play()
 
     def open_rtsp(self):
         text, ok = QInputDialog.getText(self, 'RTSP URL', 'Enter the RTSP stream url')
         if ok:
             self.url = text
-            self.pkl = None
+            self.instance_file = None
             self.play()
+
+    def set_detector_enabled(self):
+        if self.player:
+            self.player.set_detector_enabled(self.ui.detector.isChecked())
 
     def play(self):
         if self.url is None:
@@ -201,12 +260,14 @@ class MainWindow(QMainWindow):
             self.total_time_text = '∞'
 
         self.player_thread = QThread()
-        self.player = VideoPlayer(capture, self.pkl, self.reid_model)
+        self.player = VideoPlayer(capture, self.instance_file, self.reid_model, self.face_detect_model,
+                                  self.face_recognize_model, self.attribute_model)
         self.player.moveToThread(self.player_thread)
         self.player.frameReady.connect(self.on_frame_ready)
         self.player.finished.connect(self.on_player_finished)
         self.player_thread.started.connect(self.player.thread)
         self.player_thread.start()
+        self.player.set_detector_enabled(self.ui.detector.isChecked())
         self.pause_or_resume()
 
     def pause_or_resume(self):
@@ -220,16 +281,16 @@ class MainWindow(QMainWindow):
             self.player.pause_or_resume(state)
             self.ui.playButton.setText('⏸' if state else '⏵')
 
-    def on_frame_ready(self, frame: QImage, info, reids):
+    def on_frame_ready(self, frame: QImage, info, instances):
         video = self.ui.video
         table = self.ui.infoTable
         pixmap = QPixmap.fromImage(frame)
         painter = QPainter()
         painter.begin(pixmap)
         painter.setPen(QPen(QColor(0xff0000), 2))
-        for reid in reids:
-            bbox = reid['bbox']
-            painter.drawRect(bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1])
+        # for reid in reids:
+        #     bbox = reid['bbox']
+        #     painter.drawRect(bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1])
         painter.end()
         pixmap = pixmap.scaled(video.width(), video.height(), Qt.KeepAspectRatio)
         video.setPixmap(pixmap)
@@ -248,6 +309,7 @@ class MainWindow(QMainWindow):
         self.player_thread = None
         self.playing = False
         self.ui.playButton.setText('⏵')
+        self.ui.playSlider.setEnabled(False)
 
     def stop(self):
         if self.player is not None:
