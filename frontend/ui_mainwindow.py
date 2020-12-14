@@ -236,6 +236,7 @@ class Ui_MainWindow(object):
         self.showSidebar.setObjectName("showSidebar")
         self.detector = QtWidgets.QAction(MainWindow)
         self.detector.setCheckable(True)
+        self.detector.setChecked(True)
         self.detector.setObjectName("detector")
         self.loadBlacklist = QtWidgets.QAction(MainWindow)
         self.loadBlacklist.setObjectName("loadBlacklist")

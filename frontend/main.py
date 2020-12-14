@@ -1,5 +1,7 @@
+import random
 import time
 from collections import OrderedDict
+from uuid import uuid4
 
 import math
 import os
@@ -38,6 +40,9 @@ ATTRIBUTE_MODEL_PATH = os.path.join(attribute_sdk, 'peta_ckpt_max.pth')
 INSTANCE_FEATURE_LENGTH = 128
 FACE_FEATURE_LENGTH = 256
 
+INSTANCE_SIMILARITY_THRESHOLD = 0.1
+FACE_SIMILARITY_THRESHOLD = 0.5
+
 
 class VideoInfoRow:
     File = 0
@@ -50,21 +55,37 @@ class VideoInfoRow:
     TotalFrame = 7
 
 
+# cosine similarity for matrix
+def cosine(u: np.array, v: np.array) -> np.array:  # u: m x f, v: n x f
+    product = np.dot(u, np.transpose(v))  # m x n
+    norm = np.dot(np.linalg.norm(u, axis=1)[:, np.newaxis], np.linalg.norm(v, axis=1)[np.newaxis, :])
+    return 1.0 - product / norm
+
+
+def random_color() -> int:
+    return random.randint(0, 0xffffff)
+
+
 class VideoPlayer(QObject):
-    # image, image info, [{ frame: index, instance: uuid, instance_feature: ndarray, instance_color: rgb,
+    # image, image info, [{ frame: index, instance: uuid, instance_color: rgb,
     #                       instance_name: option[str], instance_bbox: bbox, face: option[uuid],
-    #                       face_feature: option[ndarray], face_color: rgb, face_bbox: bbox, face_name: option[str],
-    #                       attributes: dict, blacklist: uuid, blacklist_name: option[str] }]
+    #                       face_color: option[rgb], face_bbox: option[bbox], face_name: option[str],
+    #                       attributes: dict, blacklist: option[uuid] }]
     frameReady = pyqtSignal(QImage, dict, list)
-    instancesReset = pyqtSignal(list)
+    resultsReset = pyqtSignal(OrderedDict)
+    blacklistsReset = pyqtSignal(OrderedDict)
     finished = pyqtSignal()
 
-    def __init__(self, capture, instance_file, reid_model, detect_model, recoginize_model, attribute_model):
+    def __init__(self, capture, instance_file, reid_model: ReID, detect_model: Extractor,
+                 recognize_model: RecognitionModel, attribute_model: PedestrianAttributeSDK):
         super(QObject, self).__init__()
         self.capture = capture
         self.instance_file = instance_file
         self.blacklist_file = None
         self.reid_model = reid_model
+        self.detect_model = detect_model
+        self.recognize_model = recognize_model
+        self.attribute_model = attribute_model
         self.capture_mutex = Lock()
         self.running = True  # Python assignment is atomic
         self.playing = False
@@ -72,12 +93,12 @@ class VideoPlayer(QObject):
         # State
         self.detector_enabled = False
         # Results
-        # index -> [{ frame: index, instance: uuid, instance_feature: ndarray, instance_bbox: bbox,
-        #             face: option[uuid], face_feature: option[ndarray], face_bbox: bbox, attributes: dict }]
+        # index -> [{ instance: uuid, instance_feature: ndarray, instance_bbox: bbox,
+        #             face: option[uuid], face_feature: option[ndarray], face_bbox: option[bbox], attributes: dict }]
         self.results_mutex = Lock()
         self.frames = {}
         # uuid -> { color: rgb, name: option[str] }
-        self.instance = OrderedDict()
+        self.instances = OrderedDict()
         self.instance_features = np.empty((0, INSTANCE_FEATURE_LENGTH))
         # uuid -> { color: rgb, name: option[str] }
         self.faces = OrderedDict()
@@ -114,10 +135,11 @@ class VideoPlayer(QObject):
                 if last_time is not None and new_time < last_time + rate:
                     time.sleep(last_time + rate - new_time)  # it is hard to sleep with a condition variable
                 last_time = new_time
+                frame_index = round(self.capture.get(cv2.CAP_PROP_POS_FRAMES))
                 with self.capture_mutex:
                     remaining, frame = self.capture.read()
                     data = {
-                        VideoInfoRow.Frame: round(self.capture.get(cv2.CAP_PROP_POS_FRAMES)),
+                        VideoInfoRow.Frame: frame_index,
                         VideoInfoRow.Time: self.capture.get(cv2.CAP_PROP_POS_MSEC),
                         VideoInfoRow.Progress: self.capture.get(cv2.CAP_PROP_POS_AVI_RATIO),
                     }
@@ -128,10 +150,72 @@ class VideoPlayer(QObject):
                 h, w, ch = rgb_image.shape
                 bytes_per_line = ch * w
                 image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
-                instances = []
-                if self.detector_enabled:
-                    self.reid_model.predict(frame)
-                self.frameReady.emit(image, data, instances)
+                if not self.detector_enabled:
+                    self.frameReady.emit(image, data, [])
+                else:
+                    with self.results_mutex:
+                        if frame_index not in self.frames:
+                            # Get all instances
+                            instances = [{
+                                'instance_feature': instance['reid'],
+                                'instance_bbox': instance['bbox'],
+                            } for instance in self.reid_model.predict(frame)]
+                            features = np.stack([instance['instance_feature'] for instance in instances])
+                            similarity = cosine(features, self.instance_features)
+                            while similarity.size:
+                                matched = np.unravel_index(np.argmin(similarity), similarity.shape)
+                                if similarity[matched] >= FACE_SIMILARITY_THRESHOLD:
+                                    break
+                                uuid = list(self.instances)[matched[1]]
+                                instances[matched[0]]['instance'] = uuid
+                                self.instance_features[matched[1]] = np.average(np.stack(
+                                    [instance['instance_feature'] for frame in self.frames.values()
+                                     for instance in frame if instance['instance'] == uuid]), axis=0)
+                                similarity[matched[0], :] = np.full(similarity.shape[1], 2)  # 2 is largest similarity
+                                similarity[:, matched[1]] = np.full(similarity.shape[0], 2)
+                            for instance in instances:
+                                if 'instance' not in instance:
+                                    new_uuid = uuid4()
+                                    new_instance = {
+                                        'color': random_color(),
+                                        'name': None,
+                                    }
+                                    self.instances[new_uuid] = new_instance
+                                    instance['instance'] = new_uuid
+                                    self.instance_features = np.concatenate(
+                                        (self.instance_features, instance['instance_feature'][np.newaxis, :]))
+                            for instance in instances:
+                                instance['face'] = None
+                                instance['face_feature'] = None
+                                instance['face_bbox'] = None
+                                instance['attributes'] = {}
+                            self.frames[frame_index] = instances
+                        results = []
+                        for item in self.frames[frame_index]:
+                            instance = self.instances[item['instance']]
+                            face = None if item['face'] is None else self.faces[item['face']]
+                            blacklist = None
+                            if item['face_feature'] is not None and self.blacklist_features.shape[0] > 0:
+                                face_feature = item[face_feature]
+                                similarity = cosine(face_feature[np.newaxis, :], self.blacklist_features).squeeze(0)
+                                index = np.argmin(similarity)
+                                if similarity[index] < FACE_SIMILARITY_THRESHOLD:
+                                    blacklist = list(self.blacklist)[index]
+                            results.append({
+                                'frame': frame_index,
+                                'instance': item['instance'],
+                                'instance_feature': item['instance'],
+                                'instance_color': instance['color'],
+                                'instance_name': instance['name'],
+                                'instance_bbox': item['instance_bbox'],
+                                'face': item['face'],
+                                'face_color': None if face is None else face['color'],
+                                'face_name': None if face is None else face['name'],
+                                'face_bbox': item['face_bbox'],
+                                'attributes': item['attributes'].copy(),
+                                'blacklist': blacklist,
+                            })
+                    self.frameReady.emit(image, data, results)
         self.running = False
 
     def stop(self):
@@ -287,10 +371,10 @@ class MainWindow(QMainWindow):
         pixmap = QPixmap.fromImage(frame)
         painter = QPainter()
         painter.begin(pixmap)
-        painter.setPen(QPen(QColor(0xff0000), 2))
-        # for reid in reids:
-        #     bbox = reid['bbox']
-        #     painter.drawRect(bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1])
+        for instance in instances:
+            painter.setPen(QPen(QColor(instance['instance_color']), 2))
+            bbox = instance['instance_bbox']
+            painter.drawRect(bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1])
         painter.end()
         pixmap = pixmap.scaled(video.width(), video.height(), Qt.KeepAspectRatio)
         video.setPixmap(pixmap)
