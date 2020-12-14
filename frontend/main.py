@@ -2,16 +2,31 @@ import math
 import os
 import sys
 from threading import Condition, Lock
-from time import sleep
 
-import cv2
-from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, QMutex, Qt
-from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QInputDialog, QTableWidgetItem
+from cv2 import cv2
+from PyQt5.QtCore import QThread, QObject, pyqtSignal, Qt
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QInputDialog
 
 from ui_mainwindow import Ui_MainWindow
 
 os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;udp"
+
+reid_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Reid'))
+dcn_v2_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Reid/DCNv2_latest'))
+extraction_sdk = os.path.abspath(os.path.join(os.path.dirname(__file__), '../extraction'))
+attribute_sdk = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Attribute'))
+for path in [reid_path, dcn_v2_path, extraction_sdk, attribute_sdk]:
+    if path not in sys.path:
+        sys.path.insert(0, path)
+
+from ReIDSDK import ReID
+from extractor import Extractor
+from PedestrianAttributeSDK import PedestrianAttributeSDK
+
+REID_MODEL_PATH = os.path.join(reid_path, 'fairmot_dla34.pth')
+EXTRACTOR_MODEL_PATH = os.path.join(extraction_sdk, 'face_extraction.pt')
+ATTRIBUTE_MODEL_PATH = os.path.join(attribute_sdk, 'peta_ckpt_max.pth')
 
 
 class VideoInfoRow:
@@ -26,16 +41,21 @@ class VideoInfoRow:
 
 
 class VideoPlayer(QObject):
-    frameReady = pyqtSignal(QImage, dict)
+    frameReady = pyqtSignal(QImage, dict, list)
     finished = pyqtSignal()
 
-    def __init__(self, capture):
+    def __init__(self, capture, pkl, reid_model, face_model, attribute_model):
         super(QObject, self).__init__()
         self.capture = capture
+        self.pkl = pkl
+        self.reid_model = reid_model
         self.capture_mutex = Lock()
         self.running = True  # Python assignment is atomic
         self.playing = False
         self.playing_cv = Condition()
+        # Savable data
+        # frameIndex -> [{ bbox, re_id, nullable face_bbox, nullable  face_id }]
+        self.raw_data = {}
 
     def thread(self): # A slot takes no params
         with self.playing_cv:
@@ -57,8 +77,8 @@ class VideoPlayer(QObject):
                 h, w, ch = rgb_image.shape
                 bytes_per_line = ch * w
                 image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
-                self.frameReady.emit(image, data)
-                sleep(0.02)
+                reids = self.reid_model.predict(frame)
+                self.frameReady.emit(image, data, reids)
         self.running = False
 
     def stop(self):
@@ -83,12 +103,13 @@ class VideoPlayer(QObject):
                 VideoInfoRow.Time: self.capture.get(cv2.CAP_PROP_POS_MSEC),
                 VideoInfoRow.Progress: self.capture.get(cv2.CAP_PROP_POS_AVI_RATIO),
             }
+            self.capture.set(cv2.CAP_PROP_POS_FRAMES, pos)
         if remaining:
             rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             h, w, ch = rgb_image.shape
             bytes_per_line = ch * w
             image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
-            self.frameReady.emit(image, data)
+            self.frameReady.emit(image, data, [])
 
 
 class MainWindow(QMainWindow):
@@ -99,11 +120,17 @@ class MainWindow(QMainWindow):
 
         # Data
         self.url = None
+        self.pkl = None
         self.player_thread = None
         self.player = None
         self.playing = False
         self.total_time_text = '00:00'
         self.slider_dragging = False
+
+        # Models
+        self.reid_model = ReID(REID_MODEL_PATH, model_name='dla_34')
+        self.face_model = Extractor(EXTRACTOR_MODEL_PATH, 'cpu')
+        self.attribute_model = PedestrianAttributeSDK(ATTRIBUTE_MODEL_PATH, 'cpu')
 
         # Signals and slots
         self.ui.playButton.clicked.connect(lambda: self.play() if self.player is None else self.pause_or_resume())
@@ -135,12 +162,14 @@ class MainWindow(QMainWindow):
                                                   '.', 'Video Files (*.mp4 *.flv *.ts *.mts *.avi)')
         if filename != '':
             self.url = filename
+            self.pkl = os.path.splitext(filename)[0] + '.npy'
             self.play()
 
     def open_rtsp(self):
         text, ok = QInputDialog.getText(self, 'RTSP URL', 'Enter the RTSP stream url')
         if ok:
             self.url = text
+            self.pkl = None
             self.play()
 
     def play(self):
@@ -172,7 +201,7 @@ class MainWindow(QMainWindow):
             self.total_time_text = '∞'
 
         self.player_thread = QThread()
-        self.player = VideoPlayer(capture)
+        self.player = VideoPlayer(capture, self.pkl, self.reid_model)
         self.player.moveToThread(self.player_thread)
         self.player.frameReady.connect(self.on_frame_ready)
         self.player.finished.connect(self.on_player_finished)
@@ -191,11 +220,19 @@ class MainWindow(QMainWindow):
             self.player.pause_or_resume(state)
             self.ui.playButton.setText('⏸' if state else '⏵')
 
-    def on_frame_ready(self, frame: QImage, info):
+    def on_frame_ready(self, frame: QImage, info, reids):
         video = self.ui.video
         table = self.ui.infoTable
-        frame = frame.scaled(video.width(), video.height(), Qt.KeepAspectRatio)
-        video.setPixmap(QPixmap.fromImage(frame))
+        pixmap = QPixmap.fromImage(frame)
+        painter = QPainter()
+        painter.begin(pixmap)
+        painter.setPen(QPen(QColor(0xff0000), 2))
+        for reid in reids:
+            bbox = reid['bbox']
+            painter.drawRect(bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1])
+        painter.end()
+        pixmap = pixmap.scaled(video.width(), video.height(), Qt.KeepAspectRatio)
+        video.setPixmap(pixmap)
         table.item(VideoInfoRow.Frame, 1).setText(str(info[VideoInfoRow.Frame]))
         table.item(VideoInfoRow.Time, 1).setText('%.2f' % info[VideoInfoRow.Time])
         table.item(VideoInfoRow.Progress, 1).setText('%.2f' % (info[VideoInfoRow.Progress] * 100))

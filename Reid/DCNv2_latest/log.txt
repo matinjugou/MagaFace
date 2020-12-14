@@ -1,0 +1,809 @@
+rm: cannot remove '*.so': No such file or directory
+running build
+running build_ext
+building '_ext' extension
+creating /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build
+creating /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9
+creating /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home
+creating /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun
+creating /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects
+creating /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace
+creating /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid
+creating /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid/DCNv2_latest
+creating /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src
+creating /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu
+/usr/lib/python3.9/site-packages/torch/utils/cpp_extension.py:266: UserWarning: 
+
+                               !! WARNING !!
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Your compiler (c++) is not compatible with the compiler Pytorch was
+built with for this platform, which is g++ on linux. Please
+use g++ to to compile your extension. Alternatively, you may
+compile PyTorch from source using c++, and then you can also use
+c++ to compile your extension.
+
+See https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md for help
+with compiling PyTorch from source.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                              !! WARNING !!
+
+  warnings.warn(WRONG_COMPILER_WARNING.format(
+Emitting ninja build file /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/build.ninja...
+Compiling objects...
+Allowing ninja to set a default number of workers... (overridable by setting the environment variable MAX_JOBS=N)
+[1/4] c++ -MMD -MF /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.o.d -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -fno-semantic-interposition -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -fPIC -I/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src -I/usr/lib/python3.9/site-packages/torch/include -I/usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include -I/usr/lib/python3.9/site-packages/torch/include/TH -I/usr/lib/python3.9/site-packages/torch/include/THC -I/usr/include/python3.9 -c -c /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp -o /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.o -DTORCH_API_INCLUDE_EXTENSION_H '-DPYBIND11_COMPILER_TYPE="_gcc"' '-DPYBIND11_STDLIB="_libstdcpp"' '-DPYBIND11_BUILD_ABI="_cxxabi1014"' -DTORCH_EXTENSION_NAME=_ext -D_GLIBCXX_USE_CXX11_ABI=1 -std=c++14
+FAILED: /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.o 
+c++ -MMD -MF /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.o.d -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -fno-semantic-interposition -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -fPIC -I/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src -I/usr/lib/python3.9/site-packages/torch/include -I/usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include -I/usr/lib/python3.9/site-packages/torch/include/TH -I/usr/lib/python3.9/site-packages/torch/include/THC -I/usr/include/python3.9 -c -c /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp -o /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.o -DTORCH_API_INCLUDE_EXTENSION_H '-DPYBIND11_COMPILER_TYPE="_gcc"' '-DPYBIND11_STDLIB="_libstdcpp"' '-DPYBIND11_BUILD_ABI="_cxxabi1014"' -DTORCH_EXTENSION_NAME=_ext -D_GLIBCXX_USE_CXX11_ABI=1 -std=c++14
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp: In function ‘at::Tensor dcn_v2_cpu_forward(const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, int, int, int, int, int, int, int, int, int)’:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:83:59: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+   83 |                          ones.contiguous().data<scalar_t>(), k_,
+      |                                                           ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:84:59: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+   84 |                          bias.contiguous().data<scalar_t>(), k_, 0.0f,
+      |                                                           ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:85:50: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+   85 |                          output_n.data<scalar_t>(), n_);
+      |                                                  ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:82:9: error: ‘THFloatBlas_gemm’ was not declared in this scope; did you mean ‘THFloatBlas_axpy’?
+   82 |         THFloatBlas_gemm('t', 'n', n_, m_, k_, 1.0f,
+      |         ^~~~~~~~~~~~~~~~
+      |         THFloatBlas_axpy
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:87:64: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+   87 |         modulated_deformable_im2col_cpu(input_n.data<scalar_t>(),
+      |                                                                ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:88:66: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+   88 |                                          offset_n.data<scalar_t>(),
+      |                                                                  ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:89:64: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+   89 |                                          mask_n.data<scalar_t>(),
+      |                                                                ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:94:65: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+   94 |                                          columns.data<scalar_t>());
+      |                                                                 ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:102:49: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  102 |                          columns.data<scalar_t>(), n,
+      |                                                 ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:103:48: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  103 |                          weight.data<scalar_t>(), k, 1.0f,
+      |                                                ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:104:50: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  104 |                          output_n.data<scalar_t>(), n);
+      |                                                  ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp: In function ‘std::vector<at::Tensor> dcn_v2_cpu_backward(const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, int, int, int, int, int, int, int, int, int)’:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:177:55: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  177 |                          grad_output_n.data<scalar_t>(), n,
+      |                                                       ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:178:48: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  178 |                          weight.data<scalar_t>(), m, 0.0f,
+      |                                                ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:179:49: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  179 |                          columns.data<scalar_t>(), n);
+      |                                                 ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:176:9: error: ‘THFloatBlas_gemm’ was not declared in this scope; did you mean ‘THFloatBlas_axpy’?
+  176 |         THFloatBlas_gemm('n', 't', n, m, k, 1.0f,
+      |         ^~~~~~~~~~~~~~~~
+      |         THFloatBlas_axpy
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:182:70: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  182 |         modulated_deformable_col2im_coord_cpu(columns.data<scalar_t>(),
+      |                                                                      ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:183:71: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  183 |                                                input_n.data<scalar_t>(),
+      |                                                                       ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:184:72: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  184 |                                                offset_n.data<scalar_t>(),
+      |                                                                        ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:185:70: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  185 |                                                mask_n.data<scalar_t>(),
+      |                                                                      ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:190:77: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  190 |                                                grad_offset_n.data<scalar_t>(),
+      |                                                                             ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:191:75: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  191 |                                                grad_mask_n.data<scalar_t>());
+      |                                                                           ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:193:64: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  193 |         modulated_deformable_col2im_cpu(columns.data<scalar_t>(),
+      |                                                                ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:194:66: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  194 |                                          offset_n.data<scalar_t>(),
+      |                                                                  ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:195:64: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  195 |                                          mask_n.data<scalar_t>(),
+      |                                                                ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:200:70: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  200 |                                          grad_input_n.data<scalar_t>());
+      |                                                                      ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:203:64: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  203 |         modulated_deformable_im2col_cpu(input_n.data<scalar_t>(),
+      |                                                                ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:204:66: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  204 |                                          offset_n.data<scalar_t>(),
+      |                                                                  ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:205:64: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  205 |                                          mask_n.data<scalar_t>(),
+      |                                                                ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:210:65: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  210 |                                          columns.data<scalar_t>());
+      |                                                                 ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:217:49: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  217 |                          columns.data<scalar_t>(), k_,
+      |                                                 ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:218:55: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  218 |                          grad_output_n.data<scalar_t>(), k_, 1.0f,
+      |                                                       ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:219:53: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  219 |                          grad_weight.data<scalar_t>(), n_);
+      |                                                     ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_cpu.cpp:4:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+[2/4] c++ -MMD -MF /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_im2col_cpu.o.d -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -fno-semantic-interposition -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -fPIC -I/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src -I/usr/lib/python3.9/site-packages/torch/include -I/usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include -I/usr/lib/python3.9/site-packages/torch/include/TH -I/usr/lib/python3.9/site-packages/torch/include/THC -I/usr/include/python3.9 -c -c /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_im2col_cpu.cpp -o /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_im2col_cpu.o -DTORCH_API_INCLUDE_EXTENSION_H '-DPYBIND11_COMPILER_TYPE="_gcc"' '-DPYBIND11_STDLIB="_libstdcpp"' '-DPYBIND11_BUILD_ABI="_cxxabi1014"' -DTORCH_EXTENSION_NAME=_ext -D_GLIBCXX_USE_CXX11_ABI=1 -std=c++14
+[3/4] c++ -MMD -MF /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.o.d -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -fno-semantic-interposition -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -fPIC -I/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src -I/usr/lib/python3.9/site-packages/torch/include -I/usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include -I/usr/lib/python3.9/site-packages/torch/include/TH -I/usr/lib/python3.9/site-packages/torch/include/THC -I/usr/include/python3.9 -c -c /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp -o /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.o -DTORCH_API_INCLUDE_EXTENSION_H '-DPYBIND11_COMPILER_TYPE="_gcc"' '-DPYBIND11_STDLIB="_libstdcpp"' '-DPYBIND11_BUILD_ABI="_cxxabi1014"' -DTORCH_EXTENSION_NAME=_ext -D_GLIBCXX_USE_CXX11_ABI=1 -std=c++14
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp: In lambda function:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:324:41: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+  324 |   AT_DISPATCH_FLOATING_TYPES(input.type(), "dcn_v2_psroi_pooling_cpu_forward", [&] {
+      |                                         ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:277:30: note: declared here
+  277 |   DeprecatedTypeProperties & type() const {
+      |                              ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp: In lambda function:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:327:43: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  327 |         input.contiguous().data<scalar_t>(),
+      |                                           ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:333:42: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  333 |         bbox.contiguous().data<scalar_t>(),
+      |                                          ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:334:43: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  334 |         trans.contiguous().data<scalar_t>(),
+      |                                           ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:343:28: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  343 |         out.data<scalar_t>(),
+      |                            ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:344:34: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  344 |         top_count.data<scalar_t>());
+      |                                  ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp: In lambda function:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:327:43: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  327 |         input.contiguous().data<scalar_t>(),
+      |                                           ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:333:42: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  333 |         bbox.contiguous().data<scalar_t>(),
+      |                                          ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:334:43: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  334 |         trans.contiguous().data<scalar_t>(),
+      |                                           ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:343:28: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  343 |         out.data<scalar_t>(),
+      |                            ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:344:34: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  344 |         top_count.data<scalar_t>());
+      |                                  ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp: In function ‘std::tuple<at::Tensor, at::Tensor> dcn_v2_psroi_pooling_cpu_forward(const at::Tensor&, const at::Tensor&, const at::Tensor&, int, float, int, int, int, int, int, float)’:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:295:13: warning: unused variable ‘batch’ [-Wunused-variable]
+  295 |   const int batch = input.size(0);
+      |             ^~~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp: In lambda function:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:398:44: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+  398 |   AT_DISPATCH_FLOATING_TYPES(out_grad.type(), "dcn_v2_psroi_pooling_cpu_backward", [&] {
+      |                                            ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:277:30: note: declared here
+  277 |   DeprecatedTypeProperties & type() const {
+      |                              ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp: In lambda function:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:401:46: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  401 |         out_grad.contiguous().data<scalar_t>(),
+      |                                              ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:402:47: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  402 |         top_count.contiguous().data<scalar_t>(),
+      |                                               ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:411:48: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  411 |         input_grad.contiguous().data<scalar_t>(),
+      |                                                ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:412:48: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  412 |         trans_grad.contiguous().data<scalar_t>(),
+      |                                                ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:413:43: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  413 |         input.contiguous().data<scalar_t>(),
+      |                                           ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:414:42: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  414 |         bbox.contiguous().data<scalar_t>(),
+      |                                          ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:415:43: warning: ‘T* at::Tensor::data() const [with T = double]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  415 |         trans.contiguous().data<scalar_t>(),
+      |                                           ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp: In lambda function:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:401:46: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  401 |         out_grad.contiguous().data<scalar_t>(),
+      |                                              ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:402:47: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  402 |         top_count.contiguous().data<scalar_t>(),
+      |                                               ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:411:48: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  411 |         input_grad.contiguous().data<scalar_t>(),
+      |                                                ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:412:48: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  412 |         trans_grad.contiguous().data<scalar_t>(),
+      |                                                ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:413:43: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  413 |         input.contiguous().data<scalar_t>(),
+      |                                           ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:414:42: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  414 |         bbox.contiguous().data<scalar_t>(),
+      |                                          ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+In file included from /usr/include/ATen/ATen.h:13,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:415:43: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+  415 |         trans.contiguous().data<scalar_t>(),
+      |                                           ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/dcn_v2_psroi_pooling_cpu.cpp:15:
+/usr/include/ATen/core/TensorBody.h:363:7: note: declared here
+  363 |   T * data() const {
+      |       ^~~~
+[4/4] c++ -MMD -MF /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/vision.o.d -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -fno-semantic-interposition -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -march=x86-64 -mtune=generic -O3 -pipe -fno-plt -fPIC -I/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src -I/usr/lib/python3.9/site-packages/torch/include -I/usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include -I/usr/lib/python3.9/site-packages/torch/include/TH -I/usr/lib/python3.9/site-packages/torch/include/THC -I/usr/include/python3.9 -c -c /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/vision.cpp -o /home/sun/Projects/MagaFace/Reid/DCNv2_latest/build/temp.linux-x86_64-3.9/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/vision.o -DTORCH_API_INCLUDE_EXTENSION_H '-DPYBIND11_COMPILER_TYPE="_gcc"' '-DPYBIND11_STDLIB="_libstdcpp"' '-DPYBIND11_BUILD_ABI="_cxxabi1014"' -DTORCH_EXTENSION_NAME=_ext -D_GLIBCXX_USE_CXX11_ABI=1 -std=c++14
+In file included from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/vision.cpp:2:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/dcn_v2.h: In function ‘at::Tensor dcn_v2_forward(const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, int, int, int, int, int, int, int, int, int)’:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/dcn_v2.h:25:20: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+   25 |     if (input.type().is_cuda())
+      |                    ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/types.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader_options.h:4,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader/base.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader/stateful.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/all.h:8,
+                 from /usr/include/torch/extension.h:4,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/vision.h:2,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/dcn_v2.h:3,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/vision.cpp:2:
+/usr/include/ATen/core/TensorBody.h:277:30: note: declared here
+  277 |   DeprecatedTypeProperties & type() const {
+      |                              ^~~~
+In file included from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/vision.cpp:2:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/dcn_v2.h: In function ‘std::vector<at::Tensor> dcn_v2_backward(const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, int, int, int, int, int, int, int, int, int)’:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/dcn_v2.h:61:20: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+   61 |     if (input.type().is_cuda())
+      |                    ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/types.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader_options.h:4,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader/base.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader/stateful.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/all.h:8,
+                 from /usr/include/torch/extension.h:4,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/vision.h:2,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/dcn_v2.h:3,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/vision.cpp:2:
+/usr/include/ATen/core/TensorBody.h:277:30: note: declared here
+  277 |   DeprecatedTypeProperties & type() const {
+      |                              ^~~~
+In file included from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/vision.cpp:2:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/dcn_v2.h: In function ‘std::tuple<at::Tensor, at::Tensor> dcn_v2_psroi_pooling_forward(const at::Tensor&, const at::Tensor&, const at::Tensor&, int, float, int, int, int, int, int, float)’:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/dcn_v2.h:107:20: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+  107 |     if (input.type().is_cuda())
+      |                    ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/types.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader_options.h:4,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader/base.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader/stateful.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/all.h:8,
+                 from /usr/include/torch/extension.h:4,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/vision.h:2,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/dcn_v2.h:3,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/vision.cpp:2:
+/usr/include/ATen/core/TensorBody.h:277:30: note: declared here
+  277 |   DeprecatedTypeProperties & type() const {
+      |                              ^~~~
+In file included from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/vision.cpp:2:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/dcn_v2.h: In function ‘std::tuple<at::Tensor, at::Tensor> dcn_v2_psroi_pooling_backward(const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, const at::Tensor&, int, float, int, int, int, int, int, float)’:
+/home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/dcn_v2.h:155:20: warning: ‘at::DeprecatedTypeProperties& at::Tensor::type() const’ is deprecated: Tensor.type() is deprecated. Instead use Tensor.options(), which in many cases (e.g. in a constructor) is a drop-in replacement. If you were using data from type(), that is now available from Tensor itself, so instead of tensor.type().scalar_type(), use tensor.scalar_type() instead and instead of tensor.type().backend() use tensor.device(). [-Wdeprecated-declarations]
+  155 |     if (input.type().is_cuda())
+      |                    ^
+In file included from /usr/include/ATen/Tensor.h:3,
+                 from /usr/include/ATen/Context.h:4,
+                 from /usr/include/ATen/ATen.h:9,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/types.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader_options.h:4,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader/base.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader/stateful.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/data.h:3,
+                 from /usr/lib/python3.9/site-packages/torch/include/torch/csrc/api/include/torch/all.h:8,
+                 from /usr/include/torch/extension.h:4,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/cpu/vision.h:2,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/dcn_v2.h:3,
+                 from /home/sun/Projects/MagaFace/Reid/DCNv2_latest/src/vision.cpp:2:
+/usr/include/ATen/core/TensorBody.h:277:30: note: declared here
+  277 |   DeprecatedTypeProperties & type() const {
+      |                              ^~~~
+ninja: build stopped: subcommand failed.
+Traceback (most recent call last):
+  File "/usr/lib/python3.9/site-packages/torch/utils/cpp_extension.py", line 1533, in _run_ninja_build
+    subprocess.run(
+  File "/usr/lib/python3.9/subprocess.py", line 524, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['ninja', '-v']' returned non-zero exit status 1.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/sun/Projects/MagaFace/Reid/DCNv2_latest/setup.py", line 55, in <module>
+    setup(
+  File "/usr/lib/python3.9/site-packages/setuptools/__init__.py", line 153, in setup
+    return distutils.core.setup(**attrs)
+  File "/usr/lib/python3.9/distutils/core.py", line 148, in setup
+    dist.run_commands()
+  File "/usr/lib/python3.9/distutils/dist.py", line 966, in run_commands
+    self.run_command(cmd)
+  File "/usr/lib/python3.9/distutils/dist.py", line 985, in run_command
+    cmd_obj.run()
+  File "/usr/lib/python3.9/distutils/command/build.py", line 135, in run
+    self.run_command(cmd_name)
+  File "/usr/lib/python3.9/distutils/cmd.py", line 313, in run_command
+    self.distribution.run_command(command)
+  File "/usr/lib/python3.9/distutils/dist.py", line 985, in run_command
+    cmd_obj.run()
+  File "/usr/lib/python3.9/site-packages/setuptools/command/build_ext.py", line 79, in run
+    _build_ext.run(self)
+  File "/usr/lib/python3.9/distutils/command/build_ext.py", line 340, in run
+    self.build_extensions()
+  File "/usr/lib/python3.9/site-packages/torch/utils/cpp_extension.py", line 670, in build_extensions
+    build_ext.build_extensions(self)
+  File "/usr/lib/python3.9/distutils/command/build_ext.py", line 449, in build_extensions
+    self._build_extensions_serial()
+  File "/usr/lib/python3.9/distutils/command/build_ext.py", line 474, in _build_extensions_serial
+    self.build_extension(ext)
+  File "/usr/lib/python3.9/site-packages/setuptools/command/build_ext.py", line 196, in build_extension
+    _build_ext.build_extension(self, ext)
+  File "/usr/lib/python3.9/distutils/command/build_ext.py", line 529, in build_extension
+    objects = self.compiler.compile(sources,
+  File "/usr/lib/python3.9/site-packages/torch/utils/cpp_extension.py", line 491, in unix_wrap_ninja_compile
+    _write_ninja_file_and_compile_objects(
+  File "/usr/lib/python3.9/site-packages/torch/utils/cpp_extension.py", line 1250, in _write_ninja_file_and_compile_objects
+    _run_ninja_build(
+  File "/usr/lib/python3.9/site-packages/torch/utils/cpp_extension.py", line 1555, in _run_ninja_build
+    raise RuntimeError(message) from e
+RuntimeError: Error compiling objects for extension

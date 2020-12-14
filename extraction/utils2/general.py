@@ -24,8 +24,8 @@ from scipy.cluster.vq import kmeans
 from scipy.signal import butter, filtfilt
 from tqdm import tqdm
 
-from utils.google_utils import gsutil_getsize
-from utils.torch_utils import is_parallel, init_torch_seeds
+from utils2.google_utils import gsutil_getsize
+from utils2.torch_utils import is_parallel, init_torch_seeds
 
 # Set printoptions
 torch.set_printoptions(linewidth=320, precision=5, profile='long')
