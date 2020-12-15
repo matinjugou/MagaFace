@@ -26,7 +26,7 @@ lowerBody_style = ["休闲装", "正式装"]
 lowerBody_dress = ["牛仔裤", "短裤", "短裙", "长裤"]
 footwear_dress = ["皮鞋", "凉鞋", "普通鞋", "运动鞋"]
 carrying_type = ["背包", "其他", "单肩包", "无背包", "塑料袋"]
-age_range = ["小于30岁", "大于30岁小于45岁", "大于45岁小于60岁", "大于60岁"]
+age_range = ["小于30", "大于30小于45", "大于45小于60", "大于60"]
 
 def get_reload_weight(model_path, model):
     model = torch.nn.DataParallel(model)
@@ -36,7 +36,7 @@ def get_reload_weight(model_path, model):
     return model
 
 class PedestrianAttributeSDK():
-    def __init__(self, model_path, device):
+    def __init__(self, model_path, device='cpu'):
         backbone = resnet50()
         classifier = BaseClassifier(nattr=35)
         model = FeatClassifier(backbone, classifier)

@@ -1,3 +1,4 @@
+import pickle
 import random
 import time
 from collections import OrderedDict
@@ -12,7 +13,7 @@ import numpy as np
 from PIL import Image
 from cv2 import cv2
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, Qt
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen, QFont, QStaticText, QBrush
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QInputDialog
 
 from ui_mainwindow import Ui_MainWindow
@@ -41,8 +42,11 @@ ATTRIBUTE_MODEL_PATH = os.path.join(attribute_sdk, 'peta_ckpt_max.pth')
 INSTANCE_FEATURE_LENGTH = 128
 FACE_FEATURE_LENGTH = 512
 
-INSTANCE_SIMILARITY_THRESHOLD = 0.1
-FACE_SIMILARITY_THRESHOLD = 0.1
+INSTANCE_SIMILARITY_THRESHOLD = 0.2
+FACE_SIMILARITY_THRESHOLD = 0.2
+
+FONT_SIZE = 10
+FONT_SPACE = 4
 
 
 class VideoInfoRow:
@@ -71,7 +75,7 @@ class VideoPlayer(QObject):
     # image, image info, [{ frame: index, instance: uuid, instance_color: rgb,
     #                       instance_name: option[str], instance_bbox: bbox, face: option[uuid],
     #                       face_color: option[rgb], face_bbox: option[bbox], face_name: option[str],
-    #                       attributes: dict, blacklist: option[uuid] }]
+    #                       attributes: dict, blacklist: option[uuid], blacklist_name: option[uuid] }]
     frameReady = pyqtSignal(QImage, dict, list)
     resultsReset = pyqtSignal(OrderedDict)
     blacklistsReset = pyqtSignal(OrderedDict)
@@ -110,10 +114,29 @@ class VideoPlayer(QObject):
         self.blacklist_features = np.empty((0, FACE_FEATURE_LENGTH))
 
     def load_instance_file(self):
-        pass
+        if not self.instance_file:
+            return
+        with open(self.instance_file, 'rb') as f:
+            data = pickle.load(f)
+        with self.results_mutex:
+            self.frames = data['frames']
+            self.instances = data['instances']
+            self.instance_features = data['instance_features']
+            self.faces = data['faces']
+            self.face_features = data['face_features']
 
     def save_instance_file(self):
-        pass
+        if not self.instance_file:
+            return
+        with self.results_mutex:
+            with open(self.instance_file, 'wb') as f:
+                pickle.dump({
+                    'frames': self.frames,
+                    'instances': self.instances,
+                    'instance_features': self.instance_features,
+                    'faces': self.faces,
+                    'face_features': self.face_features,
+                }, f)
 
     def load_blacklist_file(self, blacklist_filename):
         pass
@@ -147,6 +170,8 @@ class VideoPlayer(QObject):
                 if not remaining:
                     self.finished.emit(data)
                     break
+                width = round(self.capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+                height = round(self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
                 rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 h, w, ch = rgb_image.shape
                 bytes_per_line = ch * w
@@ -156,11 +181,13 @@ class VideoPlayer(QObject):
                 else:
                     with self.results_mutex:
                         if frame_index not in self.frames:
+                            def valid_bbox(bbox):
+                                return bbox[0] >= 0 and bbox[1] >= 0 and bbox[2] < width and bbox[3] < height
                             # Get all instances
                             instances = [{
                                 'instance_feature': instance['reid'],
                                 'instance_bbox': instance['bbox'],
-                            } for instance in self.reid_model.predict(frame)]
+                            } for instance in self.reid_model.predict(frame) if valid_bbox(instance['bbox'])]
                             features = np.stack([instance['instance_feature'] for instance in instances])
                             similarity = cosine(features, self.instance_features)
                             while similarity.size:
@@ -190,6 +217,9 @@ class VideoPlayer(QObject):
                             for i, instance in enumerate(instances):
                                 bbox = instance['instance_bbox']
                                 instance_image = frame[bbox[1]:bbox[3], bbox[0]:bbox[2]]
+                                instance_image_rgb = cv2.cvtColor(instance_image, cv2.COLOR_BGR2RGB)
+                                attributes = self.attribute_model.predict(Image.fromarray(instance_image_rgb).convert('RGB'))
+                                instance['attributes'] = attributes
                                 faces = self.detect_model.predict(instance_image)
                                 if faces:
                                     face_bbox = max(faces, key=lambda x: x[4])
@@ -210,7 +240,6 @@ class VideoPlayer(QObject):
                                     instance['face'] = None
                                     instance['face_feature'] = None
                                     instance['face_bbox'] = None
-                                instance['attributes'] = {}
                             features = np.stack([instances[faces_instance_index]['face_feature']
                                                  for faces_instance_index in faces_instance_index])
                             similarity = cosine(features, self.face_features)
@@ -239,33 +268,39 @@ class VideoPlayer(QObject):
                                 self.face_features = np.concatenate(
                                     (self.face_features, instance['face_feature'][np.newaxis, :]))
                             self.frames[frame_index] = instances
-                        results = []
-                        for item in self.frames[frame_index]:
-                            instance = self.instances[item['instance']]
-                            face = None if item['face'] is None else self.faces[item['face']]
-                            blacklist = None
-                            if item['face_feature'] is not None and self.blacklist_features.shape[0] > 0:
-                                face_feature = item[face_feature]
-                                similarity = cosine(face_feature[np.newaxis, :], self.blacklist_features).squeeze(0)
-                                index = np.argmin(similarity)
-                                if similarity[index] < FACE_SIMILARITY_THRESHOLD:
-                                    blacklist = list(self.blacklist)[index]
-                            results.append({
-                                'frame': frame_index,
-                                'instance': item['instance'],
-                                'instance_feature': item['instance'],
-                                'instance_color': instance['color'],
-                                'instance_name': instance['name'],
-                                'instance_bbox': item['instance_bbox'],
-                                'face': item['face'],
-                                'face_color': None if face is None else face['color'],
-                                'face_name': None if face is None else face['name'],
-                                'face_bbox': item['face_bbox'],
-                                'attributes': item['attributes'].copy(),
-                                'blacklist': blacklist,
-                            })
-                    self.frameReady.emit(image, data, results)
+                        self.send_frame(image, data, frame_index)
         self.running = False
+
+    def send_frame(self, image, data, frame_index):
+        results = []
+        if frame_index in self.frames:
+            for item in self.frames[frame_index]:
+                instance = self.instances[item['instance']]
+                face = None if item['face'] is None else self.faces[item['face']]
+                blacklist = None
+                if item['face_feature'] is not None and self.blacklist_features.shape[0] > 0:
+                    face_feature = item['face_feature']
+                    similarity = cosine(face_feature[np.newaxis, :], self.blacklist_features).squeeze(0)
+                    index = np.argmin(similarity)
+                    if similarity[index] < FACE_SIMILARITY_THRESHOLD:
+                        blacklist = list(self.blacklist)[index]
+                results.append({
+                    'frame': frame_index,
+                    'instance': item['instance'],
+                    'instance_feature': item['instance'],
+                    'instance_color': instance['color'],
+                    'instance_name': instance['name'],
+                    'instance_bbox': item['instance_bbox'],
+                    'face': item['face'],
+                    'face_color': None if face is None else face['color'],
+                    'face_name': None if face is None else face['name'],
+                    'face_bbox': item['face_bbox'],
+                    'attributes': item['attributes'].copy(),
+                    'blacklist': blacklist,
+                    'blacklist_name': None if blacklist is None else self.blacklist[blacklist]['name'],
+                })
+        self.frameReady.emit(image, data, results)
+
 
     def stop(self):
         self.running = False
@@ -289,12 +324,12 @@ class VideoPlayer(QObject):
                 VideoInfoRow.Progress: self.capture.get(cv2.CAP_PROP_POS_AVI_RATIO),
             }
             self.capture.set(cv2.CAP_PROP_POS_FRAMES, pos)
-        if remaining:
+            results = []
             rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             h, w, ch = rgb_image.shape
             bytes_per_line = ch * w
             image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
-            self.frameReady.emit(image, data, [])
+            self.send_frame(image, data, pos)
 
 
 class MainWindow(QMainWindow):
@@ -328,6 +363,7 @@ class MainWindow(QMainWindow):
         self.ui.playSlider.sliderMoved.connect(self.jump_to_frame)
         self.ui.playSlider.sliderReleased.connect(self.slider_released)
         self.ui.detector.changed.connect(self.set_detector_enabled)
+        self.ui.saveResults.clicked.connect(self.save_results)
 
     def slider_pressed(self):
         self.slider_dragging = True
@@ -349,7 +385,7 @@ class MainWindow(QMainWindow):
                                                   '.', 'Video Files (*.mp4 *.flv *.ts *.mts *.avi)')
         if filename != '':
             self.url = filename
-            self.instance_file = os.path.splitext(filename)[0] + '.npy'
+            self.instance_file = os.path.splitext(filename)[0] + '.pkl'
             self.play()
 
     def open_rtsp(self):
@@ -400,6 +436,8 @@ class MainWindow(QMainWindow):
         self.player_thread.started.connect(self.player.thread)
         self.player_thread.start()
         self.player.set_detector_enabled(self.ui.detector.isChecked())
+        if self.instance_file and os.path.exists(self.instance_file):
+            self.player.load_instance_file()
         self.pause_or_resume()
 
     def pause_or_resume(self):
@@ -416,19 +454,62 @@ class MainWindow(QMainWindow):
     def on_frame_ready(self, frame: QImage, info, instances):
         video = self.ui.video
         table = self.ui.infoTable
-        pixmap = QPixmap.fromImage(frame)
+        origin_pixmap = QPixmap.fromImage(frame)
         painter = QPainter()
+        pixmap = origin_pixmap.scaled(video.width(), video.height(), Qt.KeepAspectRatio)
         painter.begin(pixmap)
+        width_scale = pixmap.width() / origin_pixmap.width()
+        height_scale = pixmap.height() / origin_pixmap.height()
+        def translate_bbox(bbox):
+            return [width_scale * bbox[0], height_scale * bbox[1], width_scale * bbox[2], height_scale * bbox[3]]
+        font = painter.font()
+        font.setPointSize(FONT_SIZE)
+        painter.setFont(font)
         for instance in instances:
-            painter.setPen(QPen(QColor(instance['instance_color']), 2))
-            bbox = instance['instance_bbox']
+            color = instance['instance_color']
+            painter.setPen(QPen(QColor(color), 4))
+            bbox = translate_bbox(instance['instance_bbox'])
             painter.drawRect(bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1])
             if instance['face'] is not None:
-                painter.setPen(QPen(QColor(instance['face_color']), 1))
-                bbox = instance['face_bbox']
+                painter.setPen(QPen(QColor(instance['face_color']), 2))
+                bbox = translate_bbox(instance['face_bbox'])
                 painter.drawRect(bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1])
+        for instance in instances:
+            bbox = translate_bbox(instance['instance_bbox'])
+            attributes = {
+                **instance['attributes'],
+                'ID': instance['instance_name'] or str(instance['instance'])[:8],
+            }
+            height = len(attributes) * (FONT_SIZE + FONT_SPACE) + 2 * FONT_SPACE
+            top = bbox[1] - height
+            background_color = QColor(0xffffff)
+            background_color.setAlphaF(0.5)
+            painter.fillRect(bbox[0], top, 150, height, background_color)
+            painter.setPen(QPen(QColor(0x0)))
+            top += FONT_SPACE
+            for key, value in attributes.items():
+                painter.drawStaticText(bbox[0] + FONT_SPACE, top, QStaticText('%s: %s' % (key, value)))
+                top += FONT_SIZE + FONT_SPACE
+        for instance in instances:
+            if instance['face'] is None:
+                continue
+            bbox = translate_bbox(instance['face_bbox'])
+            attributes = {
+                'ID': instance['face_name'] or str(instance['face'])[:8],
+            }
+            if instance['blacklist'] is not None:
+                attributes['黑名单'] = instance['blacklist_name'] or str(instance['blacklist'])[:8]
+            height = len(attributes) * (FONT_SIZE + FONT_SPACE) + 2 * FONT_SPACE
+            top = bbox[3]
+            background_color = QColor(0xffffff)
+            background_color.setAlphaF(0.5)
+            painter.fillRect(bbox[0], top, 100, height, background_color)
+            painter.setPen(QPen(QColor(0x0)))
+            top += FONT_SPACE
+            for key, value in attributes.items():
+                painter.drawStaticText(bbox[0] + FONT_SPACE, top, QStaticText('%s: %s' % (key, value)))
+                top += FONT_SIZE + FONT_SPACE
         painter.end()
-        pixmap = pixmap.scaled(video.width(), video.height(), Qt.KeepAspectRatio)
         video.setPixmap(pixmap)
         table.item(VideoInfoRow.Frame, 1).setText(str(info[VideoInfoRow.Frame]))
         table.item(VideoInfoRow.Time, 1).setText('%.2f' % info[VideoInfoRow.Time])
@@ -438,7 +519,12 @@ class MainWindow(QMainWindow):
             self.ui.playSlider.setValue(info[VideoInfoRow.Frame] - 1)
         self.ui.progressText.setText('%02d:%02d/%s' % (time // 60, time % 60, self.total_time_text))
 
+    def save_results(self):
+        if self.player is not None:
+            self.player.save_instance_file()
+
     def on_player_finished(self, info):
+        self.player.save_instance_file()
         self.player_thread.quit()
         self.player_thread.wait()
         self.player = None
