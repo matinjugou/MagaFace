@@ -467,6 +467,7 @@ class MainWindow(QMainWindow):
         self.ui.pedestrianTable.cellClicked.connect(self.on_pedestrian_cell_clicked)
         self.ui.instanceTable.cellChanged.connect(self.on_instance_cell_changed)
         self.ui.faceTable.cellChanged.connect(self.on_face_cell_changed)
+        self.ui.blacklistTable.cellChanged.connect(self.on_blacklist_cell_changed)
         self.ui.loadBlacklist.triggered.connect(self.open_blacklist)
         self.ui.loadBlacklistButton.clicked.connect(self.open_blacklist)
         self.ui.saveBlacklist.triggered.connect(self.save_blacklist)
@@ -529,6 +530,14 @@ class MainWindow(QMainWindow):
             table_item = self.ui.faceTable.item(self.faces[item[1]][0], 0)
             self.ui.faceTable.scrollToItem(table_item)
             self.ui.faceTable.setCurrentItem(table_item)
+        elif column == 5:
+            if item[2] is None:
+                return
+            self.ui.tabWidget.setCurrentIndex(2)
+            target_row = list(self.blacklist).index(item[2])
+            table_item = self.ui.blacklistTable.item(target_row, 0)
+            self.ui.blacklistTable.scrollToItem(table_item)
+            self.ui.blacklistTable.setCurrentItem(table_item)
 
     def on_instance_cell_changed(self, row, column):
         table_item = self.ui.instanceTable.item(row, column)
@@ -537,7 +546,6 @@ class MainWindow(QMainWindow):
             text = table_item.text() or None
             if self.player:
                 self.player.change_instance_name(uuid, text)
-            self.ui.instanceTable.item(row, 1).setText(text or '')
             for i in rows:
                 self.ui.pedestrianTable.item(i, 1).setText(text or str(uuid)[:8])
 
@@ -548,9 +556,17 @@ class MainWindow(QMainWindow):
             text = table_item.text() or None
             if self.player:
                 self.player.change_face_name(uuid, text)
-            self.ui.faceTable.item(row, 1).setText(text or '')
             for i in rows:
                 self.ui.pedestrianTable.item(i, 3).setText(text or str(uuid)[:8])
+
+    def on_blacklist_cell_changed(self, row, column):
+        table_item = self.ui.blacklistTable.item(row, column)
+        uuid, (rows, _) = list(self.blacklist.items())[row]
+        if column == 1:
+            text = table_item.text() or None
+            self.blacklist_object.change_blacklist_name(uuid, text)
+            for i in rows:
+                self.ui.pedestrianTable.item(i, 5).setText(text or str(uuid)[:8])
 
     def slider_pressed(self):
         self.slider_dragging = True
@@ -669,7 +685,6 @@ class MainWindow(QMainWindow):
         self.ui.blacklistTable.setItem(row, 0, item)
         item = QTableWidgetItem()
         item.setText(name or '')
-        item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # TODO: editable
         self.ui.blacklistTable.setItem(row, 1, item)
         button = QPushButton()
         button.setText('Remove')
