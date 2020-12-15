@@ -13,7 +13,7 @@ import numpy as np
 from PIL import Image
 from cv2 import cv2
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, Qt
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen, QFont, QStaticText, QBrush
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen, QFont, QStaticText, QBrush, QGuiApplication
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QInputDialog, QTableWidgetItem
 
 from ui_mainwindow import Ui_MainWindow
@@ -42,8 +42,9 @@ ATTRIBUTE_MODEL_PATH = os.path.join(attribute_sdk, 'peta_ckpt_max.pth')
 INSTANCE_FEATURE_LENGTH = 128
 FACE_FEATURE_LENGTH = 512
 
-INSTANCE_SIMILARITY_THRESHOLD = 0.3
-FACE_SIMILARITY_THRESHOLD = 0.3
+INSTANCE_SIMILARITY_THRESHOLD = 0.25
+FACE_SIMILARITY_THRESHOLD = 0.25
+FEATURE_DECAY = 0.8
 
 FONT_SIZE = 10
 FONT_SPACE = 4
@@ -95,6 +96,7 @@ class VideoPlayer(QObject):
         self.running = True  # Python assignment is atomic
         self.playing = False
         self.playing_cv = Condition()
+        self.last_time = None
         # State
         self.detector_enabled = False
         # Results
@@ -127,6 +129,18 @@ class VideoPlayer(QObject):
             results = [self.generate_results(frame_index) for frame_index in self.frames]
             self.resultsReset.emit(results)
 
+    def change_instance_name(self, uuid, name):
+        with self.results_mutex:
+            self.instances[uuid]['name'] = name
+
+    def change_face_name(self, uuid, name):
+        with self.results_mutex:
+            self.faces[uuid]['name'] = name
+
+    def change_blacklist_name(self, uuid, name):
+        with self.results_mutex:
+            self.blacklist[uuid]['name'] = name
+
     def save_instance_file(self):
         if not self.instance_file:
             return
@@ -150,30 +164,30 @@ class VideoPlayer(QObject):
         self.detector_enabled = value
 
     def thread(self):
-        last_time = None
+        self.last_time = None
         with self.playing_cv:
             while self.running:
                 self.playing_cv.wait_for(lambda: self.playing)
                 if not self.running:
                     break
-                rate = 1 / self.capture.get(cv2.CAP_PROP_FPS)
-                new_time = time.time()
-                if last_time is not None and new_time < last_time + rate:
-                    time.sleep(last_time + rate - new_time)  # it is hard to sleep with a condition variable
-                last_time = new_time
-                frame_index = round(self.capture.get(cv2.CAP_PROP_POS_FRAMES))
                 with self.capture_mutex:
+                    rate = 1 / self.capture.get(cv2.CAP_PROP_FPS)
+                    new_time = time.time()
+                    if self.last_time is not None and new_time < self.last_time + rate:
+                        time.sleep(self.last_time + rate - new_time)  # it is hard to sleep with a condition variable
+                    self.last_time = new_time
+                    frame_index = round(self.capture.get(cv2.CAP_PROP_POS_FRAMES))
                     remaining, frame = self.capture.read()
                     data = {
                         VideoInfoRow.Frame: frame_index,
                         VideoInfoRow.Time: self.capture.get(cv2.CAP_PROP_POS_MSEC),
                         VideoInfoRow.Progress: self.capture.get(cv2.CAP_PROP_POS_AVI_RATIO),
                     }
+                    width = round(self.capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+                    height = round(self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
                 if not remaining:
                     self.finished.emit(data)
                     break
-                width = round(self.capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-                height = round(self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
                 rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 h, w, ch = rgb_image.shape
                 bytes_per_line = ch * w
@@ -190,20 +204,25 @@ class VideoPlayer(QObject):
                                 'instance_feature': instance['reid'],
                                 'instance_bbox': instance['bbox'],
                             } for instance in self.reid_model.predict(frame) if valid_bbox(instance['bbox'])]
-                            features = np.stack([instance['instance_feature'] for instance in instances])
-                            similarity = cosine(features, self.instance_features)
-                            while similarity.size:
-                                matched = np.unravel_index(np.argmin(similarity), similarity.shape)
-                                if similarity[matched] >= INSTANCE_SIMILARITY_THRESHOLD:
-                                    break
-                                uuid = list(self.instances)[matched[1]]
-                                instances[matched[0]]['instance'] = uuid
-                                self.instance_features[matched[1]] = np.average(np.stack(
-                                    [instance['instance_feature'] for frame in self.frames.values()
-                                     for instance in frame if instance['instance'] == uuid] + [features[matched[0]]]),
-                                    axis=0)
-                                similarity[matched[0], :] = np.full(similarity.shape[1], 2)  # 2 is largest similarity
-                                similarity[:, matched[1]] = np.full(similarity.shape[0], 2)
+                            if instances:
+                                features = np.stack([instance['instance_feature'] for instance in instances])
+                                similarity = cosine(features, self.instance_features)
+                                while similarity.size:
+                                    matched = np.unravel_index(np.argmin(similarity), similarity.shape)
+                                    if similarity[matched] >= INSTANCE_SIMILARITY_THRESHOLD:
+                                        break
+                                    uuid = list(self.instances)[matched[1]]
+                                    instances[matched[0]]['instance'] = uuid
+                                    self.instance_features[matched[1]] = \
+                                        FEATURE_DECAY * self.instance_features[matched[1]] + \
+                                        (1 - FEATURE_DECAY) * features[matched[0]]
+                                    # self.instance_features[matched[1]] = np.average(np.stack(
+                                    #     [instance['instance_feature'] for frame in self.frames.values()
+                                    #      for instance in frame if instance['instance'] == uuid] +
+                                    #     [features[matched[0]]]),
+                                    #     axis=0)
+                                    similarity[matched[0], :] = np.full(similarity.shape[1], 2)  # 2 is largest similarity
+                                    similarity[:, matched[1]] = np.full(similarity.shape[0], 2)
                             for instance in instances:
                                 if 'instance' not in instance:
                                     new_uuid = uuid4()
@@ -242,23 +261,27 @@ class VideoPlayer(QObject):
                                     instance['face'] = None
                                     instance['face_feature'] = None
                                     instance['face_bbox'] = None
-                            features = np.stack([instances[faces_instance_index]['face_feature']
-                                                 for faces_instance_index in faces_instance_index])
-                            similarity = cosine(features, self.face_features)
-                            while similarity.size:
-                                matched = np.unravel_index(np.argmin(similarity), similarity.shape)
-                                if similarity[matched] >= FACE_SIMILARITY_THRESHOLD:
-                                    break
-                                uuid = list(self.faces)[matched[1]]
-                                instances[faces_instance_index[matched[0]]]['face'] = uuid
-                                self.face_features[matched[1]] = np.average(np.stack(
-                                    [instance['face_feature'] for frame in self.frames.values()
-                                     for instance in frame if instance['face'] == uuid] + [features[matched[0]]]),
-                                    axis=0)
-                                similarity[matched[0], :] = np.full(similarity.shape[1], 2)  # 2 is largest similarity
-                                similarity[:, matched[1]] = np.full(similarity.shape[0], 2)
+                            if faces_instance_index:
+                                features = np.stack([instances[faces_instance_index]['face_feature']
+                                                     for faces_instance_index in faces_instance_index])
+                                similarity = cosine(features, self.face_features)
+                                while similarity.size:
+                                    matched = np.unravel_index(np.argmin(similarity), similarity.shape)
+                                    if similarity[matched] >= FACE_SIMILARITY_THRESHOLD:
+                                        break
+                                    uuid = list(self.faces)[matched[1]]
+                                    instances[faces_instance_index[matched[0]]]['face'] = uuid
+                                    self.face_features[matched[1]] = FEATURE_DECAY * self.face_features[matched[1]] + \
+                                                                     (1 - FEATURE_DECAY) * features[matched[0]]
+                                    # self.face_features[matched[1]] = np.average(np.stack(
+                                    #     [instance['face_feature'] for frame in self.frames.values()
+                                    #      for instance in frame if instance['face'] == uuid] +
+                                    #     [features[matched[0]]]),
+                                    #     axis=0)
+                                    similarity[matched[0], :] = np.full(similarity.shape[1], 2)  # 2 is largest similarity
+                                    similarity[:, matched[1]] = np.full(similarity.shape[0], 2)
                             for instance in instances:
-                                if 'face' in instance:
+                                if 'face' in instance or 'face_feature' not in instance:
                                     continue
                                 new_uuid = uuid4()
                                 new_face = {
@@ -326,12 +349,14 @@ class VideoPlayer(QObject):
                 VideoInfoRow.Progress: self.capture.get(cv2.CAP_PROP_POS_AVI_RATIO),
             }
             self.capture.set(cv2.CAP_PROP_POS_FRAMES, pos)
-            rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            h, w, ch = rgb_image.shape
-            bytes_per_line = ch * w
-            image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
+            self.last_time = None
+        rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb_image.shape
+        bytes_per_line = ch * w
+        image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
+        with self.results_mutex:
             results = self.generate_results(pos)
-            self.frameReady.emit(image, data, results)
+        self.frameReady.emit(image, data, results)
 
 
 def pretty_frames(frames):
@@ -369,9 +394,10 @@ class MainWindow(QMainWindow):
         self.total_time_text = '00:00'
         self.total_frames = 0
         self.slider_dragging = False
-        self.frames = {}
-        self.instances = {}
-        self.faces = {}
+        self.frames = set()
+        self.items = []
+        self.instances = OrderedDict()
+        self.faces = OrderedDict()
 
         # Models
         self.reid_model = ReID(REID_MODEL_PATH, model_name='dla_34')
@@ -388,8 +414,75 @@ class MainWindow(QMainWindow):
         self.ui.playSlider.sliderPressed.connect(self.slider_pressed)
         self.ui.playSlider.sliderMoved.connect(self.jump_to_frame)
         self.ui.playSlider.sliderReleased.connect(self.slider_released)
+        self.ui.playSlider.valueChanged.connect(self.jump_to_frame)
         self.ui.detector.changed.connect(self.set_detector_enabled)
         self.ui.saveResults.clicked.connect(self.save_results)
+        self.ui.actionSaveResults.triggered.connect(self.save_results)
+        self.ui.pedestrianTable.cellChanged.connect(self.on_pedestrian_cell_changed)
+        self.ui.pedestrianTable.cellClicked.connect(self.on_pedestrian_cell_clicked)
+        self.ui.instanceTable.cellChanged.connect(self.on_instance_cell_changed)
+        self.ui.faceTable.cellChanged.connect(self.on_face_cell_changed)
+
+    def on_pedestrian_cell_changed(self, row, column):
+        table_item = self.ui.pedestrianTable.item(row, column)
+        item = self.items[row]
+        if column == 1:  # instance ID
+            text = table_item.text() or None
+            if self.player:
+                self.player.change_instance_name(item[0], text)
+            self.ui.instanceTable.item(self.instances[item[0]][0], 1).setText(text or '')
+            for i in self.instances[item[0]][1]:
+                self.ui.pedestrianTable.item(i, column).setText(text or str(item[0])[:8])
+        elif column == 3:  # face ID
+            if item[1] is None:
+                return
+            text = table_item.text() or None
+            if self.player:
+                self.player.change_face_name(item[1], text)
+            self.ui.faceTable.item(self.faces[item[1]][0], 1).setText(text or '')
+            for i in self.faces[item[1]][1]:
+                self.ui.pedestrianTable.item(i, column).setText(text or str(item[1])[:8])
+        elif column == 5:  # blacklist
+            pass
+
+    def on_pedestrian_cell_clicked(self, row, column):
+        if not QGuiApplication.keyboardModifiers() == Qt.ControlModifier:
+            return
+        item = self.items[row]
+        if column == 1:  # instance ID
+            self.ui.pedestrianTabWidget.setCurrentIndex(1)
+            table_item = self.ui.instanceTable.item(self.instances[item[0]][0], 0)
+            self.ui.instanceTable.scrollToItem(table_item)
+            self.ui.instanceTable.setCurrentItem(table_item)
+        elif column == 3:  # face ID
+            if item[1] is None:
+                return
+            self.ui.pedestrianTabWidget.setCurrentIndex(2)
+            table_item = self.ui.faceTable.item(self.faces[item[1]][0], 0)
+            self.ui.faceTable.scrollToItem(table_item)
+            self.ui.faceTable.setCurrentItem(table_item)
+
+    def on_instance_cell_changed(self, row, column):
+        table_item = self.ui.instanceTable.item(row, column)
+        uuid, (_, rows, _) = list(self.instances.items())[row]
+        if column == 1:
+            text = table_item.text() or None
+            if self.player:
+                self.player.change_instance_name(uuid, text)
+            self.ui.instanceTable.item(row, 1).setText(text or '')
+            for i in rows:
+                self.ui.pedestrianTable.item(i, 1).setText(text or str(uuid)[:8])
+
+    def on_face_cell_changed(self, row, column):
+        table_item = self.ui.faceTable.item(row, column)
+        uuid, (_, rows, _) = list(self.faces.items())[row]
+        if column == 1:
+            text = table_item.text() or None
+            if self.player:
+                self.player.change_face_name(uuid, text)
+            self.ui.faceTable.item(row, 1).setText(text or '')
+            for i in rows:
+                self.ui.pedestrianTable.item(i, 3).setText(text or str(uuid)[:8])
 
     def slider_pressed(self):
         self.slider_dragging = True
@@ -454,8 +547,9 @@ class MainWindow(QMainWindow):
             self.ui.playSlider.setEnabled(False)
             self.total_time_text = '∞'
         self.frames = set()
-        self.instances = {}
-        self.faces = {}
+        self.items = []
+        self.instances = OrderedDict()
+        self.faces = OrderedDict()
         self.ui.pedestrianTable.setRowCount(0)
         self.ui.instanceTable.setRowCount(0)
         self.ui.faceTable.setRowCount(0)
@@ -477,8 +571,9 @@ class MainWindow(QMainWindow):
 
     def reset_results(self, results):
         self.frames = set()
-        self.instances = {}
-        self.faces = {}
+        self.items = []
+        self.instances = OrderedDict()
+        self.faces = OrderedDict()
         self.ui.pedestrianTable.setRowCount(0)
         self.ui.instanceTable.setRowCount(0)
         self.ui.faceTable.setRowCount(0)
@@ -488,24 +583,28 @@ class MainWindow(QMainWindow):
     def process_results(self, results):
         if not results:
             return
-        frame_index = results[0]['frame']
+        frame_index = results[0]['frame'] + 1
         if frame_index in self.frames:
             return
         self.frames.add(frame_index)
         last_pedestrian_item = None
         last_instance_item = None
         last_face_item = None
+        self.ui.pedestrianTable.blockSignals(True)
+        self.ui.instanceTable.blockSignals(True)
+        self.ui.faceTable.blockSignals(True)
         for result in results:
+            self.items.append((result['instance'], result['face'], result['blacklist']))
             # Instance
             if result['instance'] not in self.instances:
                 row = self.ui.instanceTable.rowCount()
                 self.ui.instanceTable.insertRow(row)
-                self.instances.setdefault(result['instance'], (row, set(), set()))
+                self.instances[result['instance']]= row, set(), set()
                 last_instance_item = QTableWidgetItem(str(result['instance']))
                 last_instance_item.setFlags(last_instance_item.flags() & ~Qt.ItemIsEditable)
                 self.ui.instanceTable.setItem(row, 0, last_instance_item)
                 item = QTableWidgetItem(result['instance_name'] or '')
-                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                # item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                 self.ui.instanceTable.setItem(row, 1, item)
                 item = QTableWidgetItem()
                 item.setBackground(QColor(result['instance_color']))
@@ -515,15 +614,15 @@ class MainWindow(QMainWindow):
                 item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                 self.ui.instanceTable.setItem(row, 3, item)
             # Face
-            if result['face'] not in self.faces:
+            if result['face'] is not None and result['face'] not in self.faces:
                 row = self.ui.faceTable.rowCount()
                 self.ui.faceTable.insertRow(row)
-                self.faces.setdefault(result['face'], (row, set(), set()))
+                self.faces[result['face']]= row, set(), set()
                 last_face_item = QTableWidgetItem(str(result['face']))
                 last_face_item.setFlags(last_face_item.flags() & ~Qt.ItemIsEditable)
                 self.ui.faceTable.setItem(row, 0, last_face_item)
                 item = QTableWidgetItem(result['face_name'] or '')
-                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                # item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                 self.ui.faceTable.setItem(row, 1, item)
                 item = QTableWidgetItem()
                 item.setBackground(QColor(result['face_color']))
@@ -539,41 +638,52 @@ class MainWindow(QMainWindow):
             last_pedestrian_item.setFlags(last_pedestrian_item.flags() & ~Qt.ItemIsEditable)
             self.ui.pedestrianTable.setItem(row, 0, last_pedestrian_item)
             item = QTableWidgetItem(result['instance_name'] or str(result['instance'])[:8])
-            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            # item.setFlags(item.flags() & ~Qt.ItemIsEditable)
             self.ui.pedestrianTable.setItem(row, 1, item)
             item = QTableWidgetItem()
             item.setBackground(QColor(result['instance_color']))
             item.setFlags(item.flags() & ~Qt.ItemIsEditable)
             self.ui.pedestrianTable.setItem(row, 2, item)
-            item = QTableWidgetItem(result['face_name'] or str(result['face'])[:8])
-            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            item = QTableWidgetItem('' if result['face'] is None else result['face_name'] or str(result['face'])[:8])
+            if result['face'] is None:
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
             self.ui.pedestrianTable.setItem(row, 3, item)
             item = QTableWidgetItem()
-            item.setBackground(QColor(result['face_color']))
+            if result['face_color'] is not None:
+                item.setBackground(QColor(result['face_color']))
             item.setFlags(item.flags() & ~Qt.ItemIsEditable)
             self.ui.pedestrianTable.setItem(row, 4, item)
-            item = QTableWidgetItem(result['blacklist_name'] or str(result['blacklist'])[:8])
+            item = QTableWidgetItem('' if result['blacklist'] is None else
+                                    result['blacklist_name'] or str(result['blacklist'])[:8])
             item.setFlags(item.flags() & ~Qt.ItemIsEditable)
             self.ui.pedestrianTable.setItem(row, 5, item)
             item = QTableWidgetItem(', '.join(['%s: %s' % (key, value) for key, value in result['attributes'].items()]))
             item.setFlags(item.flags() & ~Qt.ItemIsEditable)
             self.ui.pedestrianTable.setItem(row, 6, item)
             # Update instance frames
-            instance_row, frames, pedestrians = self.instances[result['instance']]
+            instance_row, pedestrians, frames = self.instances[result['instance']]
             if frame_index not in frames:
                 pedestrians.add(row)
                 frames.add(frame_index)
                 self.ui.instanceTable.item(instance_row, 3).setText(pretty_frames(frames))
+                self.instances[result['instance']][1].add(row)
             # Update face frames
-            face_row, frames, pedestrians = self.faces[result['face']]
-            if frame_index not in frames:
-                pedestrians.add(row)
-                frames.add(frame_index)
-                self.ui.faceTable.item(face_row, 3).setText(pretty_frames(frames))
+            if result['face'] is not None:
+                face_row, pedestrians, frames = self.faces[result['face']]
+                if frame_index not in frames:
+                    pedestrians.add(row)
+                    frames.add(frame_index)
+                    self.ui.faceTable.item(face_row, 3).setText(pretty_frames(frames))
+                    self.faces[result['face']][1].add(row)
         if last_pedestrian_item is not None:
             self.ui.pedestrianTable.scrollToItem(last_pedestrian_item)
         if last_instance_item is not None:
             self.ui.instanceTable.scrollToItem(last_instance_item)
+        if last_face_item is not None:
+            self.ui.faceTable.scrollToItem(last_face_item)
+        self.ui.pedestrianTable.blockSignals(False)
+        self.ui.instanceTable.blockSignals(False)
+        self.ui.faceTable.blockSignals(False)
 
     def pause_or_resume(self):
         if not self.finished:
@@ -652,13 +762,16 @@ class MainWindow(QMainWindow):
         table.item(VideoInfoRow.Progress, 1).setText('%.2f' % (info[VideoInfoRow.Progress] * 100))
         time = math.floor(info[VideoInfoRow.Time] / 1000)
         if self.ui.playSlider.isEnabled():
+            self.ui.playSlider.blockSignals(True)
             self.ui.playSlider.setValue(info[VideoInfoRow.Frame] - 1)
+            self.ui.playSlider.blockSignals(False)
         self.ui.progressText.setText('%02d:%02d/%s %d/%d' % (time // 60, time % 60, self.total_time_text,
                                                              info[VideoInfoRow.Frame], self.total_frames))
 
     def save_results(self):
         if self.player is not None:
             self.player.save_instance_file()
+            self.ui.statusBar.showMessage('Results saved!')
 
     def on_player_finished(self, info):
         self.player.save_instance_file()
