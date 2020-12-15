@@ -9,6 +9,7 @@ import sys
 from threading import Condition, Lock
 
 import numpy as np
+from PIL import Image
 from cv2 import cv2
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, Qt
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen
@@ -38,10 +39,10 @@ RECOGNIZE_MODEL_PATH = os.path.join(recognize_sdk, 'Backbone_IR_50_Epoch_125_Bat
 ATTRIBUTE_MODEL_PATH = os.path.join(attribute_sdk, 'peta_ckpt_max.pth')
 
 INSTANCE_FEATURE_LENGTH = 128
-FACE_FEATURE_LENGTH = 256
+FACE_FEATURE_LENGTH = 512
 
 INSTANCE_SIMILARITY_THRESHOLD = 0.1
-FACE_SIMILARITY_THRESHOLD = 0.5
+FACE_SIMILARITY_THRESHOLD = 0.1
 
 
 class VideoInfoRow:
@@ -74,7 +75,7 @@ class VideoPlayer(QObject):
     frameReady = pyqtSignal(QImage, dict, list)
     resultsReset = pyqtSignal(OrderedDict)
     blacklistsReset = pyqtSignal(OrderedDict)
-    finished = pyqtSignal()
+    finished = pyqtSignal(dict)
 
     def __init__(self, capture, instance_file, reid_model: ReID, detect_model: Extractor,
                  recognize_model: RecognitionModel, attribute_model: PedestrianAttributeSDK):
@@ -144,7 +145,7 @@ class VideoPlayer(QObject):
                         VideoInfoRow.Progress: self.capture.get(cv2.CAP_PROP_POS_AVI_RATIO),
                     }
                 if not remaining:
-                    self.finished.emit()
+                    self.finished.emit(data)
                     break
                 rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 h, w, ch = rgb_image.shape
@@ -164,13 +165,14 @@ class VideoPlayer(QObject):
                             similarity = cosine(features, self.instance_features)
                             while similarity.size:
                                 matched = np.unravel_index(np.argmin(similarity), similarity.shape)
-                                if similarity[matched] >= FACE_SIMILARITY_THRESHOLD:
+                                if similarity[matched] >= INSTANCE_SIMILARITY_THRESHOLD:
                                     break
                                 uuid = list(self.instances)[matched[1]]
                                 instances[matched[0]]['instance'] = uuid
                                 self.instance_features[matched[1]] = np.average(np.stack(
                                     [instance['instance_feature'] for frame in self.frames.values()
-                                     for instance in frame if instance['instance'] == uuid]), axis=0)
+                                     for instance in frame if instance['instance'] == uuid] + [features[matched[0]]]),
+                                    axis=0)
                                 similarity[matched[0], :] = np.full(similarity.shape[1], 2)  # 2 is largest similarity
                                 similarity[:, matched[1]] = np.full(similarity.shape[0], 2)
                             for instance in instances:
@@ -184,11 +186,58 @@ class VideoPlayer(QObject):
                                     instance['instance'] = new_uuid
                                     self.instance_features = np.concatenate(
                                         (self.instance_features, instance['instance_feature'][np.newaxis, :]))
-                            for instance in instances:
-                                instance['face'] = None
-                                instance['face_feature'] = None
-                                instance['face_bbox'] = None
+                            faces_instance_index = []
+                            for i, instance in enumerate(instances):
+                                bbox = instance['instance_bbox']
+                                instance_image = frame[bbox[1]:bbox[3], bbox[0]:bbox[2]]
+                                faces = self.detect_model.predict(instance_image)
+                                if faces:
+                                    face_bbox = max(faces, key=lambda x: x[4])
+                                    face_bbox = [round(face_bbox[0]), round(face_bbox[1]),
+                                                 round(face_bbox[2]), round(face_bbox[3])]
+                                    face_image = instance_image[face_bbox[1]:face_bbox[3], face_bbox[0]:face_bbox[2]]
+                                    face_image = cv2.cvtColor(face_image, cv2.COLOR_BGR2RGB)
+                                    feature = self.recognize_model.predict_raw(Image.fromarray(face_image)).squeeze(0)
+                                    faces_instance_index.append(i)
+                                    instance['face_feature'] = feature
+                                    instance['face_bbox'] = [
+                                        bbox[0] + face_bbox[0],
+                                        bbox[1] + face_bbox[1],
+                                        bbox[0] + face_bbox[2],
+                                        bbox[1] + face_bbox[3],
+                                    ]
+                                else:
+                                    instance['face'] = None
+                                    instance['face_feature'] = None
+                                    instance['face_bbox'] = None
                                 instance['attributes'] = {}
+                            features = np.stack([instances[faces_instance_index]['face_feature']
+                                                 for faces_instance_index in faces_instance_index])
+                            similarity = cosine(features, self.face_features)
+                            while similarity.size:
+                                matched = np.unravel_index(np.argmin(similarity), similarity.shape)
+                                if similarity[matched] >= FACE_SIMILARITY_THRESHOLD:
+                                    break
+                                uuid = list(self.faces)[matched[1]]
+                                instances[faces_instance_index[matched[0]]]['face'] = uuid
+                                self.face_features[matched[1]] = np.average(np.stack(
+                                    [instance['face_feature'] for frame in self.frames.values()
+                                     for instance in frame if instance['face'] == uuid] + [features[matched[0]]]),
+                                    axis=0)
+                                similarity[matched[0], :] = np.full(similarity.shape[1], 2)  # 2 is largest similarity
+                                similarity[:, matched[1]] = np.full(similarity.shape[0], 2)
+                            for instance in instances:
+                                if 'face' in instance:
+                                    continue
+                                new_uuid = uuid4()
+                                new_face = {
+                                    'color': random_color(),
+                                    'name': None,
+                                }
+                                self.faces[new_uuid] = new_face
+                                instance['face'] = new_uuid
+                                self.face_features = np.concatenate(
+                                    (self.face_features, instance['face_feature'][np.newaxis, :]))
                             self.frames[frame_index] = instances
                         results = []
                         for item in self.frames[frame_index]:
@@ -227,9 +276,8 @@ class VideoPlayer(QObject):
         if self.playing == status:
             return
         self.playing = status
-        if status:
-            with self.playing_cv:
-                self.playing_cv.notify()
+        with self.playing_cv:
+            self.playing_cv.notify_all()
 
     def set_frame(self, pos):
         with self.capture_mutex:
@@ -375,6 +423,10 @@ class MainWindow(QMainWindow):
             painter.setPen(QPen(QColor(instance['instance_color']), 2))
             bbox = instance['instance_bbox']
             painter.drawRect(bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1])
+            if instance['face'] is not None:
+                painter.setPen(QPen(QColor(instance['face_color']), 1))
+                bbox = instance['face_bbox']
+                painter.drawRect(bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1])
         painter.end()
         pixmap = pixmap.scaled(video.width(), video.height(), Qt.KeepAspectRatio)
         video.setPixmap(pixmap)
@@ -386,14 +438,21 @@ class MainWindow(QMainWindow):
             self.ui.playSlider.setValue(info[VideoInfoRow.Frame] - 1)
         self.ui.progressText.setText('%02d:%02d/%s' % (time // 60, time % 60, self.total_time_text))
 
-    def on_player_finished(self):
+    def on_player_finished(self, info):
         self.player_thread.quit()
         self.player_thread.wait()
         self.player = None
         self.player_thread = None
         self.playing = False
+        table = self.ui.infoTable
+        table.item(VideoInfoRow.Frame, 1).setText(str(info[VideoInfoRow.Frame]))
+        table.item(VideoInfoRow.Time, 1).setText('%.2f' % info[VideoInfoRow.Time])
+        table.item(VideoInfoRow.Progress, 1).setText('%.2f' % (info[VideoInfoRow.Progress] * 100))
+        time = math.floor(info[VideoInfoRow.Time] / 1000)
         self.ui.playButton.setText('⏵')
         self.ui.playSlider.setEnabled(False)
+        self.ui.playSlider.setValue(info[VideoInfoRow.Frame] - 1)
+        self.ui.progressText.setText('%02d:%02d/%s' % (time // 60, time % 60, self.total_time_text))
 
     def stop(self):
         if self.player is not None:
