@@ -1,4 +1,5 @@
 --no-binary opencv-python
+bcolz==1.2.1
 cycler==0.10.0
 future==0.18.2
 joblib==1.0.0

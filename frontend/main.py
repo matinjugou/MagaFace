@@ -474,8 +474,10 @@ class MainWindow(QMainWindow):
         self.ui.saveBlacklistButton.clicked.connect(self.save_blacklist)
 
     def open_blacklist(self):
+
         self.blacklist_file, _ = QFileDialog.getOpenFileName(self, 'Select Blacklist',
-                                                             '.', 'Pickle Files (*.pkl)')
+                                                             '.', 'Pickle Files (*.pkl)',
+                                                             options=QFileDialog.DontUseNativeDialog)
         self.blacklist_file = self.blacklist_file or None
         if self.blacklist_file is not None:
             self.blacklist = OrderedDict()
@@ -487,7 +489,8 @@ class MainWindow(QMainWindow):
             return
         if self.blacklist_file is None:
             self.blacklist_file, _ = QFileDialog.getSaveFileName(self, 'Save Blacklist',
-                                                                 '.', 'Pickle Files (*.pkl)')
+                                                                 '.', 'Pickle Files (*.pkl)',
+                                                                 options=QFileDialog.DontUseNativeDialog)
             self.blacklist_file = self.blacklist_file or None
         if self.blacklist_file is not None:
             self.blacklist_object.save_blacklist_file(self.blacklist_file)
@@ -585,7 +588,8 @@ class MainWindow(QMainWindow):
 
     def open_file(self):
         filename, _ = QFileDialog.getOpenFileName(self, 'Select Video File',
-                                                  '.', 'Video Files (*.mp4 *.flv *.ts *.mts *.avi)')
+                                                  '.', 'Video Files (*.mp4 *.flv *.ts *.mts *.avi)',
+                                                  options=QFileDialog.DontUseNativeDialog)
         if filename != '':
             self.url = filename
             self.instance_file = os.path.splitext(filename)[0] + '.pkl'
