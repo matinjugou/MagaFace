@@ -261,7 +261,7 @@
              <item>
               <widget class="QTableWidget" name="pedestrianTable">
                <property name="styleSheet">
-                <string notr="true">border: 0</string>
+                <string notr="true">QTableWidget#pedestrianTable { border: none; }</string>
                </property>
                <property name="selectionMode">
                 <enum>QAbstractItemView::SingleSelection</enum>
@@ -331,7 +331,7 @@
              <item>
               <widget class="QTableWidget" name="instanceTable">
                <property name="styleSheet">
-                <string notr="true">border: 0</string>
+                <string notr="true">QTableWidget#instanceTable { border: none; }</string>
                </property>
                <property name="selectionMode">
                 <enum>QAbstractItemView::SingleSelection</enum>
@@ -386,7 +386,7 @@
              <item>
               <widget class="QTableWidget" name="faceTable">
                <property name="styleSheet">
-                <string notr="true">border: 0</string>
+                <string notr="true">QTableWidget#faceTable { border: none; }</string>
                </property>
                <property name="selectionMode">
                 <enum>QAbstractItemView::SingleSelection</enum>
@@ -405,6 +405,11 @@
                <column>
                 <property name="text">
                  <string>Name</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Action</string>
                 </property>
                </column>
                <column>
@@ -450,7 +455,17 @@
            </attribute>
            <column>
             <property name="text">
+             <string>ID</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
              <string>Name</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Action</string>
             </property>
            </column>
            <column>
@@ -470,7 +485,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="saveBlacklistbutton">
+            <widget class="QPushButton" name="saveBlacklistButton">
              <property name="text">
               <string>Save Blacklist</string>
              </property>

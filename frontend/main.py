@@ -14,7 +14,8 @@ from PIL import Image
 from cv2 import cv2
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, Qt
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen, QFont, QStaticText, QBrush, QGuiApplication
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QInputDialog, QTableWidgetItem
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QInputDialog, QTableWidgetItem, \
+    QWidget, QPushButton, QHBoxLayout
 
 from ui_mainwindow import Ui_MainWindow
 
@@ -44,6 +45,7 @@ FACE_FEATURE_LENGTH = 512
 
 INSTANCE_SIMILARITY_THRESHOLD = 0.25
 FACE_SIMILARITY_THRESHOLD = 0.25
+BLACKLIST_SIMILARITY_THRESHOLD = 0.15
 FEATURE_DECAY = 0.8
 
 FONT_SIZE = 10
@@ -72,6 +74,61 @@ def random_color() -> int:
     return random.randint(0, 0xffffff)
 
 
+class Blacklist:
+    def __init__(self):
+        # Blacklists
+        # uuid -> { name: option[str] }
+        self.blacklist_mutex = Lock()
+        self.blacklist = OrderedDict()
+        self.blacklist_features = np.empty((0, FACE_FEATURE_LENGTH))
+
+    def add_blacklist(self, feature, name):
+        with self.blacklist_mutex:
+            new_uuid = uuid4()
+            self.blacklist[new_uuid] = {
+                'name': name,
+            }
+            self.blacklist_features = np.concatenate((self.blacklist_features, feature[np.newaxis, :]))
+        return new_uuid
+
+    def remove_blacklist(self, uuid): # blacklist uuid
+        with self.blacklist_mutex:
+            index = list(self.blacklist).index(uuid)
+            del self.blacklist[uuid]
+            np.delete(self.blacklist_features, index, 0)
+
+    def load_blacklist_file(self, blacklist_filename):
+        with open(blacklist_filename, 'rb') as f:
+            data = pickle.load(f)
+        with self.blacklist_mutex:
+            self.blacklist = data['blacklist']
+            self.blacklist_features = data['blacklist_features']
+            results = [(k, v['name']) for k, v in self.blacklist.items()]
+        return results
+
+    def save_blacklist_file(self, blacklist_filename):
+        with self.blacklist_mutex:
+            with open(blacklist_filename, 'wb') as f:
+                pickle.dump({
+                    'blacklist': self.blacklist,
+                    'blacklist_features': self.blacklist_features,
+                }, f)
+
+    def change_blacklist_name(self, uuid, name):
+        with self.blacklist_mutex:
+            self.blacklist[uuid]['name'] = name
+
+    def match(self, feature):
+        with self.blacklist_mutex:
+            if self.blacklist_features.shape[0] > 0:
+                similarity = cosine(feature[np.newaxis, :], self.blacklist_features).squeeze(0)
+                index = np.argmin(similarity)
+                if similarity[index] < BLACKLIST_SIMILARITY_THRESHOLD:
+                    k, v = list(self.blacklist.items())[index]
+                    return k, v['name']
+        return None, None
+
+
 class VideoPlayer(QObject):
     # image, image info, [{ frame: index, instance: uuid, instance_color: rgb,
     #                       instance_name: option[str], instance_bbox: bbox, face: option[uuid],
@@ -79,25 +136,24 @@ class VideoPlayer(QObject):
     #                       attributes: dict, blacklist: option[uuid], blacklist_name: option[uuid] }]
     frameReady = pyqtSignal(QImage, dict, list)
     resultsReset = pyqtSignal(list)
-    blacklistsReset = pyqtSignal(OrderedDict)
     finished = pyqtSignal(dict)
 
     def __init__(self, capture, instance_file, reid_model: ReID, detect_model: Extractor,
-                 recognize_model: RecognitionModel, attribute_model: PedestrianAttributeSDK):
+                 recognize_model: RecognitionModel, attribute_model: PedestrianAttributeSDK,
+                 blacklist: Blacklist):
         super(QObject, self).__init__()
         self.capture = capture
         self.instance_file = instance_file
-        self.blacklist_file = None
         self.reid_model = reid_model
         self.detect_model = detect_model
         self.recognize_model = recognize_model
         self.attribute_model = attribute_model
+        self.blacklist = blacklist
         self.capture_mutex = Lock()
         self.running = True  # Python assignment is atomic
         self.playing = False
         self.playing_cv = Condition()
         self.last_time = None
-        # State
         self.detector_enabled = False
         # Results
         # index -> [{ instance: uuid, instance_feature: ndarray, instance_bbox: bbox,
@@ -110,10 +166,10 @@ class VideoPlayer(QObject):
         # uuid -> { color: rgb, name: option[str] }
         self.faces = OrderedDict()
         self.face_features = np.empty((0, FACE_FEATURE_LENGTH))
-        # Blacklists
-        # uuid -> { name: option[str] }
-        self.blacklist = OrderedDict()
-        self.blacklist_features = np.empty((0, FACE_FEATURE_LENGTH))
+
+    def get_face(self, uuid):
+        with self.results_mutex:
+            return self.face_features[list(self.faces).index(uuid)], self.faces[uuid]['name']
 
     def load_instance_file(self):
         if not self.instance_file:
@@ -137,10 +193,6 @@ class VideoPlayer(QObject):
         with self.results_mutex:
             self.faces[uuid]['name'] = name
 
-    def change_blacklist_name(self, uuid, name):
-        with self.results_mutex:
-            self.blacklist[uuid]['name'] = name
-
     def save_instance_file(self):
         if not self.instance_file:
             return
@@ -154,12 +206,6 @@ class VideoPlayer(QObject):
                     'face_features': self.face_features,
                 }, f)
 
-    def load_blacklist_file(self, blacklist_filename):
-        pass
-
-    def save_blacklist_file(self):
-        pass
-
     def set_detector_enabled(self, value):
         self.detector_enabled = value
 
@@ -172,10 +218,6 @@ class VideoPlayer(QObject):
                     break
                 with self.capture_mutex:
                     rate = 1 / self.capture.get(cv2.CAP_PROP_FPS)
-                    new_time = time.time()
-                    if self.last_time is not None and new_time < self.last_time + rate:
-                        time.sleep(self.last_time + rate - new_time)  # it is hard to sleep with a condition variable
-                    self.last_time = new_time
                     frame_index = round(self.capture.get(cv2.CAP_PROP_POS_FRAMES))
                     remaining, frame = self.capture.read()
                     data = {
@@ -193,7 +235,7 @@ class VideoPlayer(QObject):
                 bytes_per_line = ch * w
                 image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
                 if not self.detector_enabled:
-                    self.frameReady.emit(image, data, [])
+                    results = []
                 else:
                     with self.results_mutex:
                         if frame_index not in self.frames:
@@ -294,7 +336,11 @@ class VideoPlayer(QObject):
                                     (self.face_features, instance['face_feature'][np.newaxis, :]))
                             self.frames[frame_index] = instances
                         results = self.generate_results(frame_index)
-                    self.frameReady.emit(image, data, results)
+                new_time = time.time()
+                if self.last_time is not None and new_time < self.last_time + rate:
+                    time.sleep(self.last_time + rate - new_time)  # it is hard to sleep with a condition variable
+                self.last_time = new_time
+                self.frameReady.emit(image, data, results)
         self.running = False
 
     def generate_results(self, frame_index):
@@ -303,13 +349,9 @@ class VideoPlayer(QObject):
             for item in self.frames[frame_index]:
                 instance = self.instances[item['instance']]
                 face = None if item['face'] is None else self.faces[item['face']]
-                blacklist = None
-                if item['face_feature'] is not None and self.blacklist_features.shape[0] > 0:
-                    face_feature = item['face_feature']
-                    similarity = cosine(face_feature[np.newaxis, :], self.blacklist_features).squeeze(0)
-                    index = np.argmin(similarity)
-                    if similarity[index] < FACE_SIMILARITY_THRESHOLD:
-                        blacklist = list(self.blacklist)[index]
+                blacklist, blacklist_name = None, None
+                if item['face_feature'] is not None:
+                    blacklist, blacklist_name = self.blacklist.match(item['face_feature'])
                 results.append({
                     'frame': frame_index,
                     'instance': item['instance'],
@@ -323,7 +365,7 @@ class VideoPlayer(QObject):
                     'face_bbox': item['face_bbox'],
                     'attributes': item['attributes'].copy(),
                     'blacklist': blacklist,
-                    'blacklist_name': None if blacklist is None else self.blacklist[blacklist]['name'],
+                    'blacklist_name': blacklist_name,
                 })
         return results
 
@@ -387,6 +429,7 @@ class MainWindow(QMainWindow):
         # Data
         self.url = None
         self.instance_file = None
+        self.blacklist_file = None
         self.player_thread = None
         self.player = None
         self.playing = False
@@ -398,6 +441,8 @@ class MainWindow(QMainWindow):
         self.items = []
         self.instances = OrderedDict()
         self.faces = OrderedDict()
+        self.blacklist = OrderedDict()
+        self.blacklist_object = Blacklist()
 
         # Models
         self.reid_model = ReID(REID_MODEL_PATH, model_name='dla_34')
@@ -422,6 +467,29 @@ class MainWindow(QMainWindow):
         self.ui.pedestrianTable.cellClicked.connect(self.on_pedestrian_cell_clicked)
         self.ui.instanceTable.cellChanged.connect(self.on_instance_cell_changed)
         self.ui.faceTable.cellChanged.connect(self.on_face_cell_changed)
+        self.ui.loadBlacklist.triggered.connect(self.open_blacklist)
+        self.ui.loadBlacklistButton.clicked.connect(self.open_blacklist)
+        self.ui.saveBlacklist.triggered.connect(self.save_blacklist)
+        self.ui.saveBlacklistButton.clicked.connect(self.save_blacklist)
+
+    def open_blacklist(self):
+        self.blacklist_file, _ = QFileDialog.getOpenFileName(self, 'Select Blacklist',
+                                                             '.', 'Pickle Files (*.pkl)')
+        self.blacklist_file = self.blacklist_file or None
+        if self.blacklist_file is not None:
+            self.blacklist = OrderedDict()
+            for k, v in self.blacklist_object.load_blacklist_file(self.blacklist_file):
+                self.process_blacklist(k, v)
+
+    def save_blacklist(self):
+        if self.player is None:
+            return
+        if self.blacklist_file is None:
+            self.blacklist_file, _ = QFileDialog.getSaveFileName(self, 'Save Blacklist',
+                                                                 '.', 'Pickle Files (*.pkl)')
+            self.blacklist_file = self.blacklist_file or None
+        if self.blacklist_file is not None:
+            self.blacklist_object.save_blacklist_file(self.blacklist_file)
 
     def on_pedestrian_cell_changed(self, row, column):
         table_item = self.ui.pedestrianTable.item(row, column)
@@ -550,13 +618,16 @@ class MainWindow(QMainWindow):
         self.items = []
         self.instances = OrderedDict()
         self.faces = OrderedDict()
+        self.blacklist = OrderedDict([(k, (set(), set())) for k in self.blacklist])
         self.ui.pedestrianTable.setRowCount(0)
         self.ui.instanceTable.setRowCount(0)
         self.ui.faceTable.setRowCount(0)
+        for i in range(self.ui.blacklistTable.rowCount()):
+            self.ui.blacklistTable.item(i, 3).setText('')
 
         self.player_thread = QThread()
         self.player = VideoPlayer(capture, self.instance_file, self.reid_model, self.face_detect_model,
-                                  self.face_recognize_model, self.attribute_model)
+                                  self.face_recognize_model, self.attribute_model, self.blacklist_object)
         self.player.moveToThread(self.player_thread)
         self.player.frameReady.connect(self.on_frame_ready)
         self.player.finished.connect(self.on_player_finished)
@@ -579,6 +650,40 @@ class MainWindow(QMainWindow):
         self.ui.faceTable.setRowCount(0)
         for result in results:
             self.process_results(result)
+
+    def add_blacklist(self, uuid):  # face uuid
+        if self.player is None:
+            return
+        feature, name = self.player.get_face(uuid)
+        new_uuid = self.blacklist_object.add_blacklist(feature, name)
+        self.process_blacklist(new_uuid, name)
+        self.ui.statusBar.showMessage('Blacklist face %s added!' % str(new_uuid))
+
+    def process_blacklist(self, uuid, name):
+        row = self.ui.blacklistTable.rowCount()
+        self.ui.blacklistTable.insertRow(row)
+        self.blacklist[uuid] = set(), set()
+        item = QTableWidgetItem()
+        item.setText(str(uuid))
+        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+        self.ui.blacklistTable.setItem(row, 0, item)
+        item = QTableWidgetItem()
+        item.setText(name or '')
+        item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # TODO: editable
+        self.ui.blacklistTable.setItem(row, 1, item)
+        button = QPushButton()
+        button.setText('Remove')
+        button.clicked.connect(lambda: self.remove_blacklist(uuid))
+        self.ui.blacklistTable.setCellWidget(row, 2, button)
+        item = QTableWidgetItem()
+        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+        self.ui.blacklistTable.setItem(row, 3, item)
+
+    def remove_blacklist(self, uuid):  # blacklist uuid
+        self.ui.blacklistTable.removeRow(list(self.blacklist).index(uuid))
+        del self.blacklist[uuid]
+        self.blacklist_object.remove_blacklist(uuid)
+        self.ui.statusBar.showMessage('Blacklist face %s added!' % str(uuid))
 
     def process_results(self, results):
         if not results:
@@ -624,13 +729,20 @@ class MainWindow(QMainWindow):
                 item = QTableWidgetItem(result['face_name'] or '')
                 # item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                 self.ui.faceTable.setItem(row, 1, item)
+                button = QPushButton()
+                button.setText('Add')
+                uuid = result['face']
+                def do(uuid2):
+                    button.clicked.connect(lambda: self.add_blacklist(uuid2))
+                do(uuid)
+                self.ui.faceTable.setCellWidget(row, 2, button)
                 item = QTableWidgetItem()
                 item.setBackground(QColor(result['face_color']))
                 item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-                self.ui.faceTable.setItem(row, 2, item)
+                self.ui.faceTable.setItem(row, 3, item)
                 item = QTableWidgetItem()
                 item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-                self.ui.faceTable.setItem(row, 3, item)
+                self.ui.faceTable.setItem(row, 4, item)
             # Pedestrian
             row = self.ui.pedestrianTable.rowCount()
             self.ui.pedestrianTable.insertRow(row)
@@ -666,15 +778,20 @@ class MainWindow(QMainWindow):
                 pedestrians.add(row)
                 frames.add(frame_index)
                 self.ui.instanceTable.item(instance_row, 3).setText(pretty_frames(frames))
-                self.instances[result['instance']][1].add(row)
             # Update face frames
             if result['face'] is not None:
                 face_row, pedestrians, frames = self.faces[result['face']]
                 if frame_index not in frames:
                     pedestrians.add(row)
                     frames.add(frame_index)
-                    self.ui.faceTable.item(face_row, 3).setText(pretty_frames(frames))
-                    self.faces[result['face']][1].add(row)
+                    self.ui.faceTable.item(face_row, 4).setText(pretty_frames(frames))
+            if result['blacklist'] is not None:
+                pedestrians, frames = self.blacklist[result['blacklist']]
+                if frame_index not in frames:
+                    pedestrians.add(row)
+                    frames.add(frame_index)
+                    self.ui.blacklistTable.item(list(self.blacklist).index(result['blacklist']), 3) \
+                        .setText(pretty_frames(frames))
         if last_pedestrian_item is not None:
             self.ui.pedestrianTable.scrollToItem(last_pedestrian_item)
         if last_instance_item is not None:
@@ -728,7 +845,10 @@ class MainWindow(QMainWindow):
             }
             height = len(attributes) * (FONT_SIZE + FONT_SPACE) + 2 * FONT_SPACE
             top = bbox[1] - height
-            background_color = QColor(0xffffff)
+            if instance['blacklist'] is not None:
+                background_color = QColor(0xff0000)
+            else:
+                background_color = QColor(0xffffff)
             background_color.setAlphaF(0.5)
             painter.fillRect(bbox[0], top, 150, height, background_color)
             painter.setPen(QPen(QColor(0x0)))
@@ -745,9 +865,11 @@ class MainWindow(QMainWindow):
             }
             if instance['blacklist'] is not None:
                 attributes['黑名单'] = instance['blacklist_name'] or str(instance['blacklist'])[:8]
+                background_color = QColor(0xff0000)
+            else:
+                background_color = QColor(0xffffff)
             height = len(attributes) * (FONT_SIZE + FONT_SPACE) + 2 * FONT_SPACE
             top = bbox[3]
-            background_color = QColor(0xffffff)
             background_color.setAlphaF(0.5)
             painter.fillRect(bbox[0], top, 100, height, background_color)
             painter.setPen(QPen(QColor(0x0)))
