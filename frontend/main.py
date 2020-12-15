@@ -14,7 +14,7 @@ from PIL import Image
 from cv2 import cv2
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, Qt
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen, QFont, QStaticText, QBrush
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QInputDialog
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QInputDialog, QTableWidgetItem
 
 from ui_mainwindow import Ui_MainWindow
 
@@ -42,8 +42,8 @@ ATTRIBUTE_MODEL_PATH = os.path.join(attribute_sdk, 'peta_ckpt_max.pth')
 INSTANCE_FEATURE_LENGTH = 128
 FACE_FEATURE_LENGTH = 512
 
-INSTANCE_SIMILARITY_THRESHOLD = 0.2
-FACE_SIMILARITY_THRESHOLD = 0.2
+INSTANCE_SIMILARITY_THRESHOLD = 0.3
+FACE_SIMILARITY_THRESHOLD = 0.3
 
 FONT_SIZE = 10
 FONT_SPACE = 4
@@ -77,7 +77,7 @@ class VideoPlayer(QObject):
     #                       face_color: option[rgb], face_bbox: option[bbox], face_name: option[str],
     #                       attributes: dict, blacklist: option[uuid], blacklist_name: option[uuid] }]
     frameReady = pyqtSignal(QImage, dict, list)
-    resultsReset = pyqtSignal(OrderedDict)
+    resultsReset = pyqtSignal(list)
     blacklistsReset = pyqtSignal(OrderedDict)
     finished = pyqtSignal(dict)
 
@@ -124,6 +124,8 @@ class VideoPlayer(QObject):
             self.instance_features = data['instance_features']
             self.faces = data['faces']
             self.face_features = data['face_features']
+            results = [self.generate_results(frame_index) for frame_index in self.frames]
+            self.resultsReset.emit(results)
 
     def save_instance_file(self):
         if not self.instance_file:
@@ -268,10 +270,11 @@ class VideoPlayer(QObject):
                                 self.face_features = np.concatenate(
                                     (self.face_features, instance['face_feature'][np.newaxis, :]))
                             self.frames[frame_index] = instances
-                        self.send_frame(image, data, frame_index)
+                        results = self.generate_results(frame_index)
+                    self.frameReady.emit(image, data, results)
         self.running = False
 
-    def send_frame(self, image, data, frame_index):
+    def generate_results(self, frame_index):
         results = []
         if frame_index in self.frames:
             for item in self.frames[frame_index]:
@@ -299,8 +302,7 @@ class VideoPlayer(QObject):
                     'blacklist': blacklist,
                     'blacklist_name': None if blacklist is None else self.blacklist[blacklist]['name'],
                 })
-        self.frameReady.emit(image, data, results)
-
+        return results
 
     def stop(self):
         self.running = False
@@ -324,12 +326,31 @@ class VideoPlayer(QObject):
                 VideoInfoRow.Progress: self.capture.get(cv2.CAP_PROP_POS_AVI_RATIO),
             }
             self.capture.set(cv2.CAP_PROP_POS_FRAMES, pos)
-            results = []
             rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             h, w, ch = rgb_image.shape
             bytes_per_line = ch * w
             image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
-            self.send_frame(image, data, pos)
+            results = self.generate_results(pos)
+            self.frameReady.emit(image, data, results)
+
+
+def pretty_frames(frames):
+    results = []
+    head = None
+    previous = None
+    i = None
+    for i in sorted(frames):
+        if head is None:
+            head = i
+        elif previous + 1 < i:
+            results.append((head, previous))
+            head = i
+        else:
+            assert previous + 1 == i
+        previous = i
+    if head is not None and i is not None:
+        results.append((head, i))
+    return ', '.join([str(i) if head == i else '%s-%s' % (head, i) for head, i in results])
 
 
 class MainWindow(QMainWindow):
@@ -344,8 +365,13 @@ class MainWindow(QMainWindow):
         self.player_thread = None
         self.player = None
         self.playing = False
+        self.finished = True
         self.total_time_text = '00:00'
+        self.total_frames = 0
         self.slider_dragging = False
+        self.frames = {}
+        self.instances = {}
+        self.faces = {}
 
         # Models
         self.reid_model = ReID(REID_MODEL_PATH, model_name='dla_34')
@@ -354,7 +380,7 @@ class MainWindow(QMainWindow):
         self.attribute_model = PedestrianAttributeSDK(ATTRIBUTE_MODEL_PATH, 'cpu')
 
         # Signals and slots
-        self.ui.playButton.clicked.connect(lambda: self.play() if self.player is None else self.pause_or_resume())
+        self.ui.playButton.clicked.connect(lambda: self.play() if self.finished else self.pause_or_resume())
         self.ui.openFile.triggered.connect(self.open_file)
         self.ui.openStream.triggered.connect(self.open_rtsp)
         self.ui.actionExit.triggered.connect(self.close)
@@ -415,17 +441,24 @@ class MainWindow(QMainWindow):
         table.item(VideoInfoRow.Height, 1).setText(str(round(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))))
         fps = capture.get(cv2.CAP_PROP_FPS)
         table.item(VideoInfoRow.FrameRate, 1).setText(str(round(fps, 2)))
-        frames = round(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-        table.item(VideoInfoRow.TotalFrame, 1).setText(str(frames))
-        if frames > 0:
-            self.ui.playSlider.setMaximum(frames - 1)
+        self.total_frames = round(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        table.item(VideoInfoRow.TotalFrame, 1).setText(str(self.total_frames))
+        if self.total_frames > 0:
+            self.ui.playSlider.setMaximum(self.total_frames - 1)
             self.ui.playSlider.setEnabled(True)
-            total_time = frames / fps
+            total_time = self.total_frames / fps
             self.total_time_text = '%02d:%02d' % (total_time // 60, total_time % 60)
         else:
+            self.total_frames = 0
             self.ui.playSlider.setMaximum(0)
             self.ui.playSlider.setEnabled(False)
             self.total_time_text = '∞'
+        self.frames = set()
+        self.instances = {}
+        self.faces = {}
+        self.ui.pedestrianTable.setRowCount(0)
+        self.ui.instanceTable.setRowCount(0)
+        self.ui.faceTable.setRowCount(0)
 
         self.player_thread = QThread()
         self.player = VideoPlayer(capture, self.instance_file, self.reid_model, self.face_detect_model,
@@ -433,15 +466,117 @@ class MainWindow(QMainWindow):
         self.player.moveToThread(self.player_thread)
         self.player.frameReady.connect(self.on_frame_ready)
         self.player.finished.connect(self.on_player_finished)
+        self.player.resultsReset.connect(self.reset_results)
         self.player_thread.started.connect(self.player.thread)
         self.player_thread.start()
         self.player.set_detector_enabled(self.ui.detector.isChecked())
         if self.instance_file and os.path.exists(self.instance_file):
             self.player.load_instance_file()
+        self.finished = False
         self.pause_or_resume()
 
+    def reset_results(self, results):
+        self.frames = set()
+        self.instances = {}
+        self.faces = {}
+        self.ui.pedestrianTable.setRowCount(0)
+        self.ui.instanceTable.setRowCount(0)
+        self.ui.faceTable.setRowCount(0)
+        for result in results:
+            self.process_results(result)
+
+    def process_results(self, results):
+        if not results:
+            return
+        frame_index = results[0]['frame']
+        if frame_index in self.frames:
+            return
+        self.frames.add(frame_index)
+        last_pedestrian_item = None
+        last_instance_item = None
+        last_face_item = None
+        for result in results:
+            # Instance
+            if result['instance'] not in self.instances:
+                row = self.ui.instanceTable.rowCount()
+                self.ui.instanceTable.insertRow(row)
+                self.instances.setdefault(result['instance'], (row, set(), set()))
+                last_instance_item = QTableWidgetItem(str(result['instance']))
+                last_instance_item.setFlags(last_instance_item.flags() & ~Qt.ItemIsEditable)
+                self.ui.instanceTable.setItem(row, 0, last_instance_item)
+                item = QTableWidgetItem(result['instance_name'] or '')
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                self.ui.instanceTable.setItem(row, 1, item)
+                item = QTableWidgetItem()
+                item.setBackground(QColor(result['instance_color']))
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                self.ui.instanceTable.setItem(row, 2, item)
+                item = QTableWidgetItem()
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                self.ui.instanceTable.setItem(row, 3, item)
+            # Face
+            if result['face'] not in self.faces:
+                row = self.ui.faceTable.rowCount()
+                self.ui.faceTable.insertRow(row)
+                self.faces.setdefault(result['face'], (row, set(), set()))
+                last_face_item = QTableWidgetItem(str(result['face']))
+                last_face_item.setFlags(last_face_item.flags() & ~Qt.ItemIsEditable)
+                self.ui.faceTable.setItem(row, 0, last_face_item)
+                item = QTableWidgetItem(result['face_name'] or '')
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                self.ui.faceTable.setItem(row, 1, item)
+                item = QTableWidgetItem()
+                item.setBackground(QColor(result['face_color']))
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                self.ui.faceTable.setItem(row, 2, item)
+                item = QTableWidgetItem()
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                self.ui.faceTable.setItem(row, 3, item)
+            # Pedestrian
+            row = self.ui.pedestrianTable.rowCount()
+            self.ui.pedestrianTable.insertRow(row)
+            last_pedestrian_item = QTableWidgetItem(str(frame_index))
+            last_pedestrian_item.setFlags(last_pedestrian_item.flags() & ~Qt.ItemIsEditable)
+            self.ui.pedestrianTable.setItem(row, 0, last_pedestrian_item)
+            item = QTableWidgetItem(result['instance_name'] or str(result['instance'])[:8])
+            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            self.ui.pedestrianTable.setItem(row, 1, item)
+            item = QTableWidgetItem()
+            item.setBackground(QColor(result['instance_color']))
+            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            self.ui.pedestrianTable.setItem(row, 2, item)
+            item = QTableWidgetItem(result['face_name'] or str(result['face'])[:8])
+            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            self.ui.pedestrianTable.setItem(row, 3, item)
+            item = QTableWidgetItem()
+            item.setBackground(QColor(result['face_color']))
+            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            self.ui.pedestrianTable.setItem(row, 4, item)
+            item = QTableWidgetItem(result['blacklist_name'] or str(result['blacklist'])[:8])
+            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            self.ui.pedestrianTable.setItem(row, 5, item)
+            item = QTableWidgetItem(', '.join(['%s: %s' % (key, value) for key, value in result['attributes'].items()]))
+            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            self.ui.pedestrianTable.setItem(row, 6, item)
+            # Update instance frames
+            instance_row, frames, pedestrians = self.instances[result['instance']]
+            if frame_index not in frames:
+                pedestrians.add(row)
+                frames.add(frame_index)
+                self.ui.instanceTable.item(instance_row, 3).setText(pretty_frames(frames))
+            # Update face frames
+            face_row, frames, pedestrians = self.faces[result['face']]
+            if frame_index not in frames:
+                pedestrians.add(row)
+                frames.add(frame_index)
+                self.ui.faceTable.item(face_row, 3).setText(pretty_frames(frames))
+        if last_pedestrian_item is not None:
+            self.ui.pedestrianTable.scrollToItem(last_pedestrian_item)
+        if last_instance_item is not None:
+            self.ui.instanceTable.scrollToItem(last_instance_item)
+
     def pause_or_resume(self):
-        if self.player is not None:
+        if not self.finished:
             self.playing = not self.playing
             self.update_playing_state()
 
@@ -452,6 +587,7 @@ class MainWindow(QMainWindow):
             self.ui.playButton.setText('⏸' if state else '⏵')
 
     def on_frame_ready(self, frame: QImage, info, instances):
+        self.process_results(instances)
         video = self.ui.video
         table = self.ui.infoTable
         origin_pixmap = QPixmap.fromImage(frame)
@@ -517,7 +653,8 @@ class MainWindow(QMainWindow):
         time = math.floor(info[VideoInfoRow.Time] / 1000)
         if self.ui.playSlider.isEnabled():
             self.ui.playSlider.setValue(info[VideoInfoRow.Frame] - 1)
-        self.ui.progressText.setText('%02d:%02d/%s' % (time // 60, time % 60, self.total_time_text))
+        self.ui.progressText.setText('%02d:%02d/%s %d/%d' % (time // 60, time % 60, self.total_time_text,
+                                                             info[VideoInfoRow.Frame], self.total_frames))
 
     def save_results(self):
         if self.player is not None:
@@ -525,11 +662,8 @@ class MainWindow(QMainWindow):
 
     def on_player_finished(self, info):
         self.player.save_instance_file()
-        self.player_thread.quit()
-        self.player_thread.wait()
-        self.player = None
-        self.player_thread = None
         self.playing = False
+        self.finished = True
         table = self.ui.infoTable
         table.item(VideoInfoRow.Frame, 1).setText(str(info[VideoInfoRow.Frame]))
         table.item(VideoInfoRow.Time, 1).setText('%.2f' % info[VideoInfoRow.Time])
@@ -538,18 +672,21 @@ class MainWindow(QMainWindow):
         self.ui.playButton.setText('⏵')
         self.ui.playSlider.setEnabled(False)
         self.ui.playSlider.setValue(info[VideoInfoRow.Frame] - 1)
-        self.ui.progressText.setText('%02d:%02d/%s' % (time // 60, time % 60, self.total_time_text))
+        self.ui.progressText.setText(
+            '%02d:%02d/%s %d/%d' % (time // 60, time % 60, self.total_time_text, self.total_frames, self.total_frames))
 
     def stop(self):
         if self.player is not None:
             self.player.frameReady.disconnect(self.on_frame_ready)
             self.player.finished.disconnect(self.on_player_finished)
             self.player.stop()
+        if self.player_thread is not None:
             self.player_thread.quit()
             self.player_thread.wait()
         self.player = None
         self.player_thread = None
         self.playing = False
+        self.finished = True
         self.ui.playButton.setText('⏵')
 
     def closeEvent(self, event):

@@ -539,7 +539,7 @@
           <item>
            <widget class="QLabel" name="progressText">
             <property name="text">
-             <string>00:00/∞</string>
+             <string>00:00/∞ 0/0</string>
             </property>
            </widget>
           </item>
