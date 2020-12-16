@@ -7,6 +7,7 @@ from models.base_block import FeatClassifier, BaseClassifier
 from models.resnet import resnet50
 
 import torchvision.transforms as T
+import cv2
 
 
 height = 274
@@ -73,6 +74,8 @@ class PedestrianAttributeSDK():
 
 if __name__ == "__main__":
     PSDK = PedestrianAttributeSDK("peta_ckpt_max.pth")
-    img = Image.open("test2.jpg").convert('RGB')
-    print(PSDK.predict(img))
+    # img = Image.open("test2.jpg").convert('RGB')
+    img = cv2.imread("test2.jpg")
+    image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    print(PSDK.predict(image))
     pass

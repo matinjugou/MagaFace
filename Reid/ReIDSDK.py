@@ -56,7 +56,7 @@ class ReID():
         self.conf_thres = conf_thres
         self.model = create_model('dla_34', heads, head_conv)
         self.model = load_model(self.model, model_path)
-        # self.model = self.model.to(torch.device('cuda'))
+        self.model = self.model.to(torch.device('cuda'))
         self.model.eval()
     
     def predict(self, img0):
@@ -66,7 +66,7 @@ class ReID():
         img = img[:, :, ::-1].transpose(2, 0, 1)
         img = np.ascontiguousarray(img, dtype=np.float32)
         img /= 255.0
-        im_blob = torch.from_numpy(img).unsqueeze(0)
+        im_blob = torch.from_numpy(img).unsqueeze(0).cuda()
 
         width = img0.shape[1]
         height = img0.shape[0]
