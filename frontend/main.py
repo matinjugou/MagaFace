@@ -45,7 +45,7 @@ FACE_FEATURE_LENGTH = 512
 
 INSTANCE_SIMILARITY_THRESHOLD = 0.25
 FACE_SIMILARITY_THRESHOLD = 0.25
-BLACKLIST_SIMILARITY_THRESHOLD = 0.15
+BLACKLIST_SIMILARITY_THRESHOLD = 0.5
 FEATURE_DECAY = 0.8
 
 FONT_SIZE = 10
@@ -446,9 +446,9 @@ class MainWindow(QMainWindow):
 
         # Models
         self.reid_model = ReID(REID_MODEL_PATH, model_name='dla_34')
-        self.face_detect_model = Extractor(DETECT_MODEL_PATH, 'cpu')
+        self.face_detect_model = Extractor(DETECT_MODEL_PATH, 'cuda')
         self.face_recognize_model = RecognitionModel(RECOGNIZE_MODEL_PATH)
-        self.attribute_model = PedestrianAttributeSDK(ATTRIBUTE_MODEL_PATH, 'cpu')
+        self.attribute_model = PedestrianAttributeSDK(ATTRIBUTE_MODEL_PATH, 'cuda')
 
         # Signals and slots
         self.ui.playButton.clicked.connect(lambda: self.play() if self.finished else self.pause_or_resume())
