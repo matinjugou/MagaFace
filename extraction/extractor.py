@@ -2,10 +2,10 @@ import cv2
 import torch
 import numpy as np
 
-from models.experimental import attempt_load
-from utils.general import non_max_suppression, scale_coords
-from utils.torch_utils import select_device
-from utils.datasets import letterbox
+from models2.experimental import attempt_load
+from utils2.general import non_max_suppression, scale_coords
+from utils2.torch_utils import select_device
+from utils2.datasets import letterbox
 
 
 class Extractor():
@@ -23,7 +23,7 @@ class Extractor():
     def predict_from_file(self, image_path):
         img0 = cv2.imread(image_path)
         return self.predict(img0)
-    
+
     def predict(self, img0):
         img = letterbox(img0, new_shape=self.img_size)[0]
         # Convert
@@ -35,10 +35,10 @@ class Extractor():
         img /= 255.0  # 0 - 255 to 0.0 - 1.0
         if img.ndimension() == 3:
             img = img.unsqueeze(0)
-    
+
         # Inference
         pred = self.model(img)[0]
-    
+
         # Apply NMS
         pred = non_max_suppression(pred, self.conf_thres, self.iou_thres)
         ans = []

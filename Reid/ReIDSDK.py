@@ -47,18 +47,18 @@ def merge_outputs(detections):
             keep_inds = (results[j][:, 4] >= thresh)
             results[j] = results[j][keep_inds]
     return results
-    
+
 
 class ReID():
-    def __init__(self, model_path, conf_thres=0.4):
+    def __init__(self, model_path, conf_thres=0.4, model_name='dla_34'):
         heads = {'hm': 1, 'wh': 4, 'id': 128, 'reg': 2}
         head_conv = 256
         self.conf_thres = conf_thres
-        self.model = create_model('dla_34', heads, head_conv)
+        self.model = create_model(model_name, heads, head_conv)
         self.model = load_model(self.model, model_path)
         self.model = self.model.to(torch.device('cuda'))
         self.model.eval()
-    
+
     def predict(self, img0):
         # img0 = cv2.imread(img_path)  # BGR
         img, _, _, _ = letterbox(img0, height=640, width=640)
@@ -96,13 +96,17 @@ class ReID():
         dets = dets[remain_inds]
         id_feature = id_feature[remain_inds]
         res = []
-        
         for i in range(0, dets.shape[0]):
             bbox = dets[i][0:4]
+            bbox = [
+                int(min(bbox[0], bbox[2])),
+                int(min(bbox[1], bbox[3])),
+                int(max(bbox[0], bbox[2])),
+                int(max(bbox[1], bbox[3])),
+            ]
             res.append({
                 "reid": id_feature[i],
                 "bbox": bbox,
-                "image": img0[int(min(bbox[1], bbox[3])):int(max(bbox[1], bbox[3])), int(min(bbox[0], bbox[2])):int(max(bbox[0], bbox[2]))]
             })
         return res
 

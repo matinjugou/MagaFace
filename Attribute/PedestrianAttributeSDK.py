@@ -3,8 +3,8 @@ from PIL import Image
 import numpy as np
 import torch
 
-from models.base_block import FeatClassifier, BaseClassifier
-from models.resnet import resnet50
+from models3.base_block import FeatClassifier, BaseClassifier
+from models3.resnet import resnet50
 
 import torchvision.transforms as T
 import cv2
@@ -27,23 +27,24 @@ lowerBody_style = ["休闲装", "正式装"]
 lowerBody_dress = ["牛仔裤", "短裤", "短裙", "长裤"]
 footwear_dress = ["皮鞋", "凉鞋", "普通鞋", "运动鞋"]
 carrying_type = ["背包", "其他", "单肩包", "无背包", "塑料袋"]
-age_range = ["小于30岁", "大于30岁小于45岁", "大于45岁小于60岁", "大于60岁"]
+age_range = ["小于30", "大于30小于45", "大于45小于60", "大于60"]
 
 def get_reload_weight(model_path, model):
     model = torch.nn.DataParallel(model)
-    checkpoint = torch.load(model_path)
+    checkpoint = torch.load(model_path, map_location='cpu')
     model.load_state_dict(checkpoint['state_dicts'])
     model = model.module
     return model
 
 class PedestrianAttributeSDK():
-    def __init__(self, model_path):
+    def __init__(self, model_path, device='cpu'):
         backbone = resnet50()
         classifier = BaseClassifier(nattr=35)
         model = FeatClassifier(backbone, classifier)
-        model = model.cuda()
+        self.device =device
+        model = model.to(device)
         self.model = get_reload_weight(model_path, model)
-        self.model = self.model.cuda()
+        self.model = self.model.to(device)
         self.model.eval()
 
     def predict(self, img0):
@@ -51,11 +52,11 @@ class PedestrianAttributeSDK():
             img0 = Image.open('path/to/image.jpg')
         '''
         with torch.no_grad():
-            img0 = transform(img0).cuda().unsqueeze(0)
+            img0 = transform(img0).to(self.device).unsqueeze(0)
             valid_logits = self.model(img0)
             probs = torch.sigmoid(valid_logits).cpu().numpy()[0]
             return self.translateAttr(probs)
-    
+
     @staticmethod
     def translateAttr(prob):
         return {
