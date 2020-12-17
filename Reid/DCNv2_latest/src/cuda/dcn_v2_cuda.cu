@@ -30,7 +30,7 @@ static cublasOperation_t _cublasOpFromChar(char op) {
         "_cublasOpFromChar input should be 't', 'n' or 'c' but got `", op, "`");
   }
 
-  static void _cublasAdjustLdLevel2(int64_t m, int64_t n, int64_t* lda) {
+  static void _cublasAdjustLdLevel2(long m, long n, long* lda) {
     // Note: leading dimensions generally are checked that they are > 0
     // and at least as big the result requires (even if the value won't
     // be used).
@@ -41,7 +41,7 @@ static cublasOperation_t _cublasOpFromChar(char op) {
     // specify the sizes of op(A), op(B) where op depend on trans
     // values.
     if (n <= 1)
-      *lda = std::max<int64_t>(m, 1);
+      *lda = std::max<long>(m, 1);
   }
 
 
