@@ -50,13 +50,13 @@ def merge_outputs(detections):
 
 
 class ReID():
-    def __init__(self, model_path, conf_thres=0.4, model_name='dla_34'):
+    def __init__(self, model_path, conf_thres=0.4, model_name='dla_34', device='cpu'):
         heads = {'hm': 1, 'wh': 4, 'id': 128, 'reg': 2}
         head_conv = 256
         self.conf_thres = conf_thres
         self.model = create_model(model_name, heads, head_conv)
         self.model = load_model(self.model, model_path)
-        self.model = self.model.to(torch.device('cuda'))
+        self.model = self.model.to(device)
         self.model.eval()
 
     def predict(self, img0):

@@ -10,6 +10,9 @@
 python3 -m venv venv
 source venv/bin/activate
 DISABLE_BCOLZ_AVX2=true pip install -r requirements.txt
+cd Reid/DCNv2_latest
+./make.sh
+cd ../..
 ```
 
 而后，执行下面的命令启动应用：

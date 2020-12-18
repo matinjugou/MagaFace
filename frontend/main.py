@@ -10,6 +10,7 @@ import sys
 from threading import Condition, Lock
 
 import numpy as np
+import torch
 from PIL import Image
 from cv2 import cv2
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, Qt
@@ -41,11 +42,12 @@ RECOGNIZE_MODEL_PATH = os.path.join(recognize_sdk, 'Backbone_IR_50_Epoch_125_Bat
 ATTRIBUTE_MODEL_PATH = os.path.join(attribute_sdk, 'peta_ckpt_max.pth')
 
 INSTANCE_FEATURE_LENGTH = 128
+INSTANCE_FEATURE_LENGTH = 128
 FACE_FEATURE_LENGTH = 512
 
 INSTANCE_SIMILARITY_THRESHOLD = 0.25
 FACE_SIMILARITY_THRESHOLD = 0.25
-BLACKLIST_SIMILARITY_THRESHOLD = 0.5
+BLACKLIST_SIMILARITY_THRESHOLD = 0.25
 FEATURE_DECAY = 0.8
 
 FONT_SIZE = 10
@@ -95,7 +97,7 @@ class Blacklist:
         with self.blacklist_mutex:
             index = list(self.blacklist).index(uuid)
             del self.blacklist[uuid]
-            np.delete(self.blacklist_features, index, 0)
+            self.blacklist_features = np.delete(self.blacklist_features, index, 0)
 
     def load_blacklist_file(self, blacklist_filename):
         with open(blacklist_filename, 'rb') as f:
@@ -445,10 +447,11 @@ class MainWindow(QMainWindow):
         self.blacklist_object = Blacklist()
 
         # Models
-        self.reid_model = ReID(REID_MODEL_PATH, model_name='dla_34')
-        self.face_detect_model = Extractor(DETECT_MODEL_PATH, 'cuda')
-        self.face_recognize_model = RecognitionModel(RECOGNIZE_MODEL_PATH)
-        self.attribute_model = PedestrianAttributeSDK(ATTRIBUTE_MODEL_PATH, 'cuda')
+        device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+        self.reid_model = ReID(REID_MODEL_PATH, model_name='dla_34', device=device)
+        self.face_detect_model = Extractor(DETECT_MODEL_PATH, device=device)
+        self.face_recognize_model = RecognitionModel(RECOGNIZE_MODEL_PATH, device=device)
+        self.attribute_model = PedestrianAttributeSDK(ATTRIBUTE_MODEL_PATH, device=device)
 
         # Signals and slots
         self.ui.playButton.clicked.connect(lambda: self.play() if self.finished else self.pause_or_resume())
@@ -639,11 +642,19 @@ class MainWindow(QMainWindow):
         self.instances = OrderedDict()
         self.faces = OrderedDict()
         self.blacklist = OrderedDict([(k, (set(), set())) for k in self.blacklist])
+        self.ui.pedestrianTable.blockSignals(True)
+        self.ui.instanceTable.blockSignals(True)
+        self.ui.faceTable.blockSignals(True)
+        self.ui.blacklistTable.blockSignals(True)
         self.ui.pedestrianTable.setRowCount(0)
         self.ui.instanceTable.setRowCount(0)
         self.ui.faceTable.setRowCount(0)
         for i in range(self.ui.blacklistTable.rowCount()):
             self.ui.blacklistTable.item(i, 3).setText('')
+        self.ui.pedestrianTable.blockSignals(False)
+        self.ui.instanceTable.blockSignals(False)
+        self.ui.faceTable.blockSignals(False)
+        self.ui.blacklistTable.blockSignals(False)
 
         self.player_thread = QThread()
         self.player = VideoPlayer(capture, self.instance_file, self.reid_model, self.face_detect_model,
@@ -680,6 +691,7 @@ class MainWindow(QMainWindow):
         self.ui.statusBar.showMessage('Blacklist face %s added!' % str(new_uuid))
 
     def process_blacklist(self, uuid, name):
+        self.ui.blacklistTable.blockSignals(True)
         row = self.ui.blacklistTable.rowCount()
         self.ui.blacklistTable.insertRow(row)
         self.blacklist[uuid] = set(), set()
@@ -697,12 +709,15 @@ class MainWindow(QMainWindow):
         item = QTableWidgetItem()
         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
         self.ui.blacklistTable.setItem(row, 3, item)
+        self.ui.blacklistTable.blockSignals(False)
 
     def remove_blacklist(self, uuid):  # blacklist uuid
+        self.ui.blacklistTable.blockSignals(True)
         self.ui.blacklistTable.removeRow(list(self.blacklist).index(uuid))
         del self.blacklist[uuid]
         self.blacklist_object.remove_blacklist(uuid)
         self.ui.statusBar.showMessage('Blacklist face %s added!' % str(uuid))
+        self.ui.blacklistTable.blockSignals(False)
 
     def process_results(self, results):
         if not results:
