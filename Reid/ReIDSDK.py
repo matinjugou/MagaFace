@@ -53,6 +53,7 @@ class ReID():
     def __init__(self, model_path, conf_thres=0.4, model_name='dla_34', device='cpu'):
         heads = {'hm': 1, 'wh': 4, 'id': 128, 'reg': 2}
         head_conv = 256
+        self.device = device
         self.conf_thres = conf_thres
         self.model = create_model(model_name, heads, head_conv)
         self.model = load_model(self.model, model_path)
@@ -66,7 +67,7 @@ class ReID():
         img = img[:, :, ::-1].transpose(2, 0, 1)
         img = np.ascontiguousarray(img, dtype=np.float32)
         img /= 255.0
-        im_blob = torch.from_numpy(img).unsqueeze(0).cuda()
+        im_blob = torch.from_numpy(img).unsqueeze(0).to(self.device)
 
         width = img0.shape[1]
         height = img0.shape[0]

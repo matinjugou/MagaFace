@@ -42,7 +42,6 @@ RECOGNIZE_MODEL_PATH = os.path.join(recognize_sdk, 'Backbone_IR_50_Epoch_125_Bat
 ATTRIBUTE_MODEL_PATH = os.path.join(attribute_sdk, 'peta_ckpt_max.pth')
 
 INSTANCE_FEATURE_LENGTH = 128
-INSTANCE_FEATURE_LENGTH = 128
 FACE_FEATURE_LENGTH = 512
 
 INSTANCE_SIMILARITY_THRESHOLD = 0.25
@@ -398,8 +397,11 @@ class VideoPlayer(QObject):
         h, w, ch = rgb_image.shape
         bytes_per_line = ch * w
         image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
-        with self.results_mutex:
-            results = self.generate_results(pos)
+        if not self.detector_enabled:
+            results = []
+        else:
+            with self.results_mutex:
+                results = self.generate_results(pos)
         self.frameReady.emit(image, data, results)
 
 
